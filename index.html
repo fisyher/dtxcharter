@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="libs/bootstrap/css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="css/main.css" type="text/css">
+    <script src="libs/jquery-2.1.4.min.js" type="text/javascript"></script>
+    <script src="libs/bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+    <script src="libs/fabric.js-1.5.0/dist/fabric.min.js" type="text/javascript"></script>
+    <title>DTX Charter 1.00</title>
+  </head>
+  <body>
+  <div id='wrapper'>
+    <form>
+        <input id='openFile' type="file" accept=".dtx,.gda" style="visibility: hidden; display:none;">
+    </form>
+    <div class="row col-md-offset-1">
+        <button id='Open' class="btn btn-default navbar-btn col-md-1">Open File...</button>
+        <button id='Draw' class="btn btn-default navbar-btn col-md-1">Re-Draw</button>
+        <button id='Clear' class="btn btn-default navbar-btn col-md-1">Clear</button>
+        <label class="btn-default navbar-btn col-md-1">Select a scale factor</label>
+        <div class="navbar-btn col-md-1">          
+          <select id="SelectScaleFactor" class="form-control" style="padding-left:5px">
+            <option value="0.50">0.50</option>
+            <option value="0.75">0.75</option>
+            <option value="1.00">1.00</option>
+            <option value="1.25">1.25</option>
+            <option value="1.50" selected="selected">1.50</option>
+            <option value="1.75">1.75</option>
+            <option value="2.00">2.00</option>
+            <option value="2.25">2.25</option>
+            <option value="2.50">2.50</option>
+          </select>
+        </div>
+        <label class="btn-default navbar-btn col-md-1">Select page height</label>
+        <div class="navbar-btn col-md-1">          
+          <select id="SelectPageHeight" class="form-control" style="padding-left:5px">
+            <option value="960">960</option>
+            <option value="1440">1440</option>
+            <option value="1920" selected="selected">1920</option>
+            <option value="2400">2400</option>
+            <option value="2880">2880</option>
+            <option value="3360">3360</option>
+            <option value="3840">3840</option>
+            <option value="4800">4800</option>
+            <option value="9600">9600</option>
+            <option value="14400">14400</option>
+            <option value="28800">28800</option>
+          </select>
+        </div>  
+        <label class="btn-default navbar-btn col-md-3">Right click on canvas and select 'Save Image as...' to download image</label>     
+    </div>
+    <div  class='row col-md-offset-1'>
+      <div id="canvasContainer1" class="col-md-10 " style="height:800px;">
+        <canvas id="c1" ></canvas>  
+      </div>        
+    </div>
+    <script src="js/dtxparser.js"></script>
+    <script src="js/charter.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>
