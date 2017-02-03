@@ -52,12 +52,27 @@ $(document).ready(function(){
 				var dtx_parser = new DtxParser();
 				var status = dtx_parser.parseDtxText(contents);
 
+				//
+				var dtxparserv2 = new DtxChart.Parser();
+				var ret = dtxparserv2.parseDtxText(contents);
+				if(ret){
+					var dtxdataObject = dtxparserv2.getDtxDataObject();
+					console.log(dtxdataObject);
+					console.log(JSON.stringify(dtxdataObject));
+
+					var lineMapper = new DtxChart.LinePositionMapper(dtxdataObject);
+					console.log("Line abs position:", lineMapper.absolutePositionOfLine(0, 0));
+					console.log("Line abs position:", lineMapper.absolutePositionOfLine(0, 128));
+					console.log("Line abs position:", lineMapper.absolutePositionOfLine(4, 0));
+					//console.log("Line abs position:", lineMapper.absolutePositionOfLine("4", "0"));
+				}
+
 				if(status){
 					//Draw based on loaded dtxObject
 					var scaleFactor = parseFloat($('#SelectScaleFactor').val());
 					var pageHeight = Number($('#SelectPageHeight').val());
 					currDtxObject = dtx_parser.dtxObject;
-					console.log(currDtxObject);
+					//console.log(currDtxObject);
 					drawDtxChart(currDtxObject, plotter, scaleFactor, pageHeight);	
 				}
 			}
