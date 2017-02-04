@@ -29,30 +29,6 @@ var DtxChart = (function(mod){
 		//
 		this._currBarLength = 1.0;
 		var self = this;
-        
-        //Internal parse line function
-//        this.parseTextLine = function(line){
-//            var trimLine = trimExternalWhiteSpace(line);
-//            
-//            var lineKeyValue = splitKeyValueByColonOrWhiteSpace(trimLine);
-//            
-//            var key = lineKeyValue["key"];
-//            var value = lineKeyValue["value"];          
-//            //Select which decode function to use
-//            if(decodeFunctionMap.hasOwnProperty(key)){
-//				decodeFunctionMap[key](self._dtxdata, value);
-//			}
-//            else if(key.length === 5 && key.indexOf('BPM') === 0){
-//                var bpmMarkerIndex = parseInt(key.substring(3));
-//                
-//                decodeFunctionMap["BPM_Marker"](self, value, bpmMarkerIndex);
-//            }
-//            else{
-//                var barNum = parseInt(key.substring(0, 3));
-//				var laneCode = key.substring(3);
-//                decodeFunctionMap["BAR_LANE"](self, barNum, laneCode, value);
-//            }
-//        };
     }
     
     //Public Methods

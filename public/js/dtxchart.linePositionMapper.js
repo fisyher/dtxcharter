@@ -65,6 +65,9 @@ var DtxChart = (function(mod){
 
     }
 
+    LinePositionMapper.prototype.chartLength = function(){
+        return this.endLineAbsPosition;
+    }
 
     //This method does not check for correctness of values
     //dtxdata data correctness to be done inside parser instead
