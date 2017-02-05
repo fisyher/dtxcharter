@@ -275,11 +275,12 @@ var Xcharter;
 			this.cpositioner = new ChipPositioner(DEFAULT_CHIP_RELATIVE_X_POSITION_MAP);
 			this.heightPerPage = BASE_Y_PIXELS_PERPAGE;
 			var canvas = new fabric.StaticCanvas('c1', {
-				backgroundColor: '#000000',
 				height: this.heightPerPage + INFO_SECTION_HEIGHT,
 				width: MINIMUM_PAGE_COUNT*BASE_X_PIXELS_PERPAGE + X_OFFSET*2,
 				renderOnAddRemove: false
 			});
+			canvas.setBackgroundColor("rgba(0,0,0,1)", canvas.renderAll.bind(canvas));
+
 			this.canvas = canvas;
 			this.currentPageCount = 0;
 			this.currentTitleUnderline = null;
@@ -635,7 +636,9 @@ var Xcharter;
 			}
 
 			//Reset the plotter to original state
-			this.canvas.clear().renderAll();
+			this.canvas.clear();
+			this.canvas.setBackgroundColor('#000000', this.canvas.renderAll.bind(this.canvas));
+			this.canvas.renderAll();
 			this.canvas.setWidth(MINIMUM_PAGE_COUNT*BASE_X_PIXELS_PERPAGE + X_OFFSET*2);
 			this.canvas.setHeight(this.heightPerPage + INFO_SECTION_HEIGHT);
 			this.currentPageCount = 0;

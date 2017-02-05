@@ -537,10 +537,15 @@ var DtxChart = (function(mod){
 		"RC",
 		"RD"
 	];
+
+    Parser.utils = {
+        computeLinesFromBarLength: computeLinesFromBarLength,
+        decodeBarLine: decodeBarLine,
+        trimExternalWhiteSpace: trimExternalWhiteSpace
+    };
     
     //Export the module with new class and useful functions
     mod.Parser = Parser;
-    mod.computeLinesFromBarLength = computeLinesFromBarLength;
     mod.VERSION = VERSION;
     
     //Return the updated module

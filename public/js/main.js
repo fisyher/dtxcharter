@@ -23,6 +23,8 @@ $(document).ready(function(){
 	});
 	
 	var plotter = new Xcharter.Plotter();
+	//
+	var charter2 = new DtxChart.Charter();
 	
 	$('#Draw').click(function(e){
 		if(currDtxObject){
@@ -36,6 +38,7 @@ $(document).ready(function(){
 		plotter.clear();
 		$('#openFile').val("");
 		currDtxObject = null;
+		charter2.clearDTXChart();
 	});
 
 	$('#openFile').change(function(e){
@@ -58,13 +61,17 @@ $(document).ready(function(){
 				if(ret){
 					var dtxdataObject = dtxparserv2.getDtxDataObject();
 					console.log(dtxdataObject);
-					console.log(JSON.stringify(dtxdataObject));
+					//console.log(JSON.stringify(dtxdataObject));
 
 					var lineMapper = new DtxChart.LinePositionMapper(dtxdataObject);
-					console.log("Line abs position:", lineMapper.absolutePositionOfLine(0, 0));
-					console.log("Line abs position:", lineMapper.absolutePositionOfLine(0, 128));
-					console.log("Line abs position:", lineMapper.absolutePositionOfLine(4, 0));
-					//console.log("Line abs position:", lineMapper.absolutePositionOfLine("4", "0"));
+					charter2.setDtxData(dtxdataObject, lineMapper);
+					var canvasConfigArray = charter2.canvasRequired();
+					console.log(canvasConfigArray);
+					//
+					//canvasConfigArray[0].backgroundColor = "#000000";
+					canvasConfigArray[0].elementId = "c2";//Update directly
+					charter2.setCanvasArray(canvasConfigArray);
+					charter2.drawDTXChart();
 				}
 
 				if(status){

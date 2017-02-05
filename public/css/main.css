@@ -5,3 +5,7 @@ body {
 #canvasContainer1{
 	overflow: auto;
 }
+
+#canvasContainer2{
+	overflow: auto;
+}
