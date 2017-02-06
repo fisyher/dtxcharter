@@ -23,13 +23,20 @@ var DtxChart = (function(mod){
      */
     function createCanvas(canvasConfig){
         //TODO: Handle thrown exceptions when elementID is invalid
-        var canvas = new fabric.StaticCanvas( canvasConfig.elementId, 
+        var canvas = null;
+        try {
+            canvas = new fabric.StaticCanvas( canvasConfig.elementId, 
             {
 				backgroundColor: canvasConfig.backgroundColor,
 				height: canvasConfig.height,
 				width: canvasConfig.width,
 				renderOnAddRemove: false
 			});
+        } catch (error) {
+            //console.error("CanvasEngine error: ", error);
+            throw new Error("Invalid <canvas> element. CanvasEngine fail to create canvasObject");
+        }
+
         return canvas;
     }
 
@@ -86,9 +93,10 @@ var DtxChart = (function(mod){
         var textObject = new fabric.Text(text, {
             left: positionSize.x,
             top: positionSize.y,
-            fill: textOptions.fill,
-            fontSize: textOptions.fontSize,
-            originY: "center"
+            fill: textOptions.fill ? textOptions.fill : "#ffffff",
+            fontSize: textOptions.fontSize ? textOptions.fontSize : 20,
+            fontFamily: textOptions.fontFamily ? textOptions.fontFamily : "Times New Roman",
+            originY: textOptions.originY ? textOptions.originY : "center"
         });
 
         this._canvasObject.add(textObject);

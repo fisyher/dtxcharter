@@ -30,7 +30,7 @@ var DtxChart = (function(mod){
 
     //A collection of width/height constants for positioning purposes. Refer to diagram for details 
     var DtxChartCanvasMargins = {
-        "A": 120,//Info section height
+        "A": 80,//Info section height
         "B": 20,//Top margin of page
         "C": 30,//Left margin of chart
         "D": 30,//Right margin of chart
@@ -94,17 +94,20 @@ var DtxChart = (function(mod){
     var DtxBarLineColor = {
         "BarLine": "#ffffff",
         "QuarterLine": "#4e4e4e",
-        "EndLine": "#ff0000"
+        "EndLine": "#ff0000",
+        "TitleLine": "#ffffff"
     };
 
     var DtxTextColor = {
         "BarNumber": "#ffffff",
-        "BpmMarker": "#ffffff"
+        "BpmMarker": "#ffffff",
+        "ChartInfo": "#ffffff"
     };   
 
     var DtxFontSizes = {
         "BarNumber": 16,
-        "BpmMarker": 12
+        "BpmMarker": 12,
+        "ChartInfo": 28
     };
 
     /** 
@@ -162,7 +165,18 @@ var DtxChart = (function(mod){
     };
 
     /**
-     * 
+     * Method: DtxChart.Charter.canvasRequired
+     * Parameters: None
+     * Description: 
+     * Charter will calculate the number of canvas, the width/height and pages in each canvas required to draw all bars in the loaded dtxData.
+     * and return an array of canvasConfig objects for the calling object to dynamically creat <canvas> elements based on provided information.
+     * Returns: A canvasConfigArray object, which is an array of canvasConfig object
+     *      pages - The number of pages in each canvas 
+            pageHeight - The height of each page. A page is a panel where all chips and beat lines are drawn within
+            width - Canvas width
+            height - Canvas height
+            backgroundColor - Default is black
+            elementId - The suggested elementID which takes the form of "dtxchart_0", "dtxchart_1", "dtxchart_2"... 
      */
     Charter.prototype.canvasRequired = function(){
         //Calculate the canvas required, including the width height of each canvas and number of pages per canvas
@@ -220,7 +234,7 @@ var DtxChart = (function(mod){
      *    pages - Number of pages in this canvas
      *    width - The full width of canvas
      *    height - The full height of canvas
-     *    elementId - The id of the html5 canvas element. The caller must ensure the id is valid, otherwise the render step will fail
+     *    elementId - The id of the html5 canvas element. The caller must ensure the id is valid, otherwise this method will throw an error
      *    backgroundColor - Color string of background color of canvas
      */
     Charter.prototype.setCanvasArray = function(canvasConfigArray){
@@ -271,6 +285,7 @@ var DtxChart = (function(mod){
         }
 
         //Draw ChartInfo
+        this.drawChartInfo(chartInfo, metadata.totalNoteCount);
 
         //Draw the end line
         this.drawEndLine(this._positionMapper.chartLength());
@@ -280,6 +295,41 @@ var DtxChart = (function(mod){
             this._chartSheets[i].update();
         }
 
+    };
+
+    Charter.prototype.drawChartInfo = function(chartInfo, totalNoteCount){
+        
+        //Form the text to be printed
+        var text = chartInfo.title;
+        if(chartInfo.artist === ""){
+            text += "   ";
+        }
+        else{
+            text += " - " + chartInfo.artist + "     ";
+        }
+        //
+        text += "Level: " + chartInfo.level + "  BPM: " + chartInfo.bpm + "  Notes: " + totalNoteCount;
+
+        //Repeat for every sheet available
+        for(var i in this._chartSheets){
+            this._chartSheets[i].addText({
+                                x: DtxChartCanvasMargins.C,
+                                y: DtxChartCanvasMargins.A - 0, //A is the Line divider, The text will be slightly above it
+                                }, text, {
+                                fill: DtxTextColor.ChartInfo,
+                                fontSize: DtxFontSizes.ChartInfo,
+                                fontFamily: "Arial",
+                                originY: "bottom",
+                            });
+            this._chartSheets[i].addLine({x: DtxChartCanvasMargins.C,
+                                y: DtxChartCanvasMargins.A,
+                                width:  this._chartSheets[i].canvasWidthHeightPages().width - DtxChartCanvasMargins.C - DtxChartCanvasMargins.D,
+                                height: 0
+                                }, {
+                                    stroke: DtxBarLineColor.TitleLine,
+		                            strokeWidth: 3,
+                                });
+        }
     };
 
     Charter.prototype.drawBPMMarker = function(absPosition, bpmText){
@@ -471,6 +521,17 @@ var DtxChart = (function(mod){
         }
 
     }
+
+    /**
+     * 
+     */
+    ChartSheet.prototype.canvasWidthHeightPages = function(){
+        return {
+            width: this._canvasObject.width,
+            height: this._canvasObject.height,
+            pages: this._canvasObject.pages
+        };
+    };
 
     /**
      * positionSize - An object defined as {x: <number>, y: <number>, width: <number>, height: <number>}
