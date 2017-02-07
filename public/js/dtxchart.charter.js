@@ -15,11 +15,11 @@ var DtxChart = (function(mod){
     }
 
     var DEFAULT_SCALE = 1.0;
-    var MIN_SCALE = 1.0;
+    var MIN_SCALE = 0.5;
     var MAX_SCALE = 3.0;
 
-    var DEFAULT_PAGE_HEIGHT = 1920;
-    var MIN_PAGE_HEIGHT = 960;
+    var DEFAULT_PAGE_HEIGHT = 720;
+    var MIN_PAGE_HEIGHT = 480;
     var MAX_PAGE_HEIGHT = 3840;
 
     var DEFAULT_PAGEPERCANVAS = 20;
@@ -30,12 +30,12 @@ var DtxChart = (function(mod){
 
     //A collection of width/height constants for positioning purposes. Refer to diagram for details 
     var DtxChartCanvasMargins = {
-        "A": 80,//Info section height
-        "B": 20,//Top margin of page
+        "A": 50,//Info section height
+        "B": 10,//Top margin of page
         "C": 30,//Left margin of chart
         "D": 30,//Right margin of chart
-        "E": 30,//Bottom margin of page
-        "F": 50,//Right margin of each page (Except the last page for each canvas)
+        "E": 60,//Bottom margin of page
+        "F": 20,//Right margin of each page (Except the last page for each canvas)
         "G": 10,//Top/Bottom margin of Last/First line from the top/bottom border of each page
     };
 
@@ -101,13 +101,15 @@ var DtxChart = (function(mod){
     var DtxTextColor = {
         "BarNumber": "#ffffff",
         "BpmMarker": "#ffffff",
-        "ChartInfo": "#ffffff"
+        "ChartInfo": "#ffffff",
+        "PageNumber": "#b7b7b7"
     };   
 
     var DtxFontSizes = {
         "BarNumber": 16,
         "BpmMarker": 12,
-        "ChartInfo": 28
+        "ChartInfo": 28,
+        "PageNumber": 16
     };
 
     /** 
@@ -202,7 +204,9 @@ var DtxChart = (function(mod){
             //The last canvas has less pages if pageInLastCanvas is not zero so width needs to be calculated again
             if(pageInLastCanvas !== 0 && i === canvasCount - 1){
                 var widthFinalCanvas = DtxChartCanvasMargins.C + 
-            (DtxChartPageMarkerHorizontalPositions.width + DtxChartCanvasMargins.F) * pageInLastCanvas + DtxChartCanvasMargins.D;
+            (DtxChartPageMarkerHorizontalPositions.width + DtxChartCanvasMargins.F) * 
+            (pageInLastCanvas < MIN_PAGEPERCANVAS ? MIN_PAGEPERCANVAS : pageInLastCanvas) + //The width cannot be less than 4 page wide even though the last sheet may contain less than 4 pages  
+            DtxChartCanvasMargins.D;
                 canvasConfigArray.push({
                     "pages": pageInLastCanvas,
                     "pageHeight": this._pageHeight,
@@ -229,13 +233,15 @@ var DtxChart = (function(mod){
 
     /**
      * Parameters:
-     * canvasConfigArray - An array of canvasConfig objects:
+     * canvasConfigArray - An array of canvasConfig objects, one per canvas sheet in sequence:
      *    canvasConfig is an object with following information:
      *    pages - Number of pages in this canvas
      *    width - The full width of canvas
      *    height - The full height of canvas
      *    elementId - The id of the html5 canvas element. The caller must ensure the id is valid, otherwise this method will throw an error
      *    backgroundColor - Color string of background color of canvas
+     * Remarks: 
+     * If the number of sheets created does not match the required number, Charter will only render up to available number of sheets.
      */
     Charter.prototype.setCanvasArray = function(canvasConfigArray){
         this._chartSheets = [];//NOTE: Repeated calls may cause memory issues
@@ -290,11 +296,41 @@ var DtxChart = (function(mod){
         //Draw the end line
         this.drawEndLine(this._positionMapper.chartLength());
 
+        //Draw Chartsheet
+        if(this._chartSheets.length > 1){
+            for(var i in this._chartSheets){
+                this.drawSheetNumber(parseInt(i), this._chartSheets.length);
+            }
+        }        
+
         //Update all canvas
         for(var i in this._chartSheets){
             this._chartSheets[i].update();
         }
 
+    };
+
+    Charter.prototype.drawSheetNumber = function(currentSheet, sheetCount){
+        if(!this._chartSheets[currentSheet]){
+                console.log("Sheet unavailable! Unable to draw");
+                return;
+            }
+
+        var pageWidthHeight = this._chartSheets[currentSheet].canvasWidthHeightPages();
+        var width = pageWidthHeight.width;
+        var height = pageWidthHeight.height;
+
+        var text = "Part " + (currentSheet + 1) + " of " + sheetCount;
+        
+        this._chartSheets[currentSheet].addText({
+                            x: width - DtxChartCanvasMargins.D - 100,
+                            y: height - 10, //A is the Line divider, The text will be slightly above it
+                            }, text, {
+                            fill: DtxTextColor.PageNumber,
+                            fontSize: DtxFontSizes.PageNumber,
+                            fontFamily: "Arial",
+                            originY: "bottom",
+                        });
     };
 
     Charter.prototype.drawChartInfo = function(chartInfo, totalNoteCount){
@@ -312,6 +348,10 @@ var DtxChart = (function(mod){
 
         //Repeat for every sheet available
         for(var i in this._chartSheets){
+            if(!this._chartSheets[i]){
+                console.log("Sheet unavailable! Unable to draw");
+                continue;
+            }
             this._chartSheets[i].addText({
                                 x: DtxChartCanvasMargins.C,
                                 y: DtxChartCanvasMargins.A - 0, //A is the Line divider, The text will be slightly above it
