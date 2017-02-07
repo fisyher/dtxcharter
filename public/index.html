@@ -21,9 +21,9 @@
           <select id="SelectScaleFactor" class="form-control" style="padding-left:5px">
             <option value="0.50">0.50</option>
             <option value="0.75">0.75</option>
-            <option value="1.00">1.00</option>
+            <option value="1.00" selected="selected">1.00</option>
             <option value="1.25">1.25</option>
-            <option value="1.50" selected="selected">1.50</option>
+            <option value="1.50">1.50</option>
             <option value="1.75">1.75</option>
             <option value="2.00">2.00</option>
             <option value="2.25">2.25</option>
@@ -33,30 +33,20 @@
         <label class="btn-default navbar-btn col-md-1">Select page height</label>
         <div class="navbar-btn col-md-1">          
           <select id="SelectPageHeight" class="form-control" style="padding-left:5px">
+            <option value="480">480</option>
+            <option value="720" selected="selected">720</option>
             <option value="960">960</option>
             <option value="1440">1440</option>
-            <option value="1920" selected="selected">1920</option>
+            <option value="1920">1920</option>
             <option value="2400">2400</option>
             <option value="2880">2880</option>
             <option value="3360">3360</option>
             <option value="3840">3840</option>
-            <option value="4800">4800</option>
-            <option value="9600">9600</option>
-            <option value="14400">14400</option>
-            <option value="28800">28800</option>
           </select>
         </div>  
         <label class="btn-default navbar-btn col-md-3">Right click on canvas and select 'Save Image as...' to download image</label>     
     </div>
-    <div  class='row col-md-offset-1'>
-      <div id="canvasContainer1" class="col-md-10 " style="height:800px;">
-        <canvas id="c1" ></canvas>  
-      </div>        
-    </div>
-    <div  class='row col-md-offset-1'>
-      <div id="canvasContainer2" class="col-md-10 " style="height:800px;">
-        <canvas id="c2" ></canvas>  
-      </div>        
+    <div id="chart-container" class="container-fluid">
     </div>
     <script src="bower_components/jquery/dist/jquery.min.js" type="text/javascript"></script>
     <script src="bower_components/bootstrap/dist/js/bootstrap.min.js" type="text/javascript"></script>
@@ -65,8 +55,6 @@
     <script src="js/dtxchart.canvasEngine_Fabric.js"></script>
     <script src="js/dtxchart.charter.js"></script>    
     <script src="js/dtxchart.linePositionMapper.js"></script>
-    <script src="js/dtxparser.js"></script>
-    <script src="js/charter.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>

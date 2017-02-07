@@ -9,3 +9,8 @@ body {
 #canvasContainer2{
 	overflow: auto;
 }
+
+.canvasSheetContainer{
+	overflow: auto;
+	height:865px;
+}

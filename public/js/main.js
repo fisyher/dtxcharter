@@ -16,29 +16,53 @@ $(document).ready(function(){
 
 	//
 	var currDtxObject = null;
+	var dtxdataObject = null;
+	var lineMapper = null;
+
+	//
+	function createCanvasSheets(canvasConfigArray){
+		for(var i in canvasConfigArray){
+			$("#chart-container").append('<div class="row col-md-offset-1"><div id="canvasContainer2" class="col-md-10 canvasSheetContainer"><canvas id="'+ canvasConfigArray[i].elementId +'"></canvas></div></div>');
+		}
+	}
 
 	// create a wrapper around native canvas element (with id="c1")
 	$('#Open').click(function(e){
 		$('#openFile').trigger('click');
 	});
 	
-	var plotter = new Xcharter.Plotter();
+	//var plotter = new Xcharter.Plotter();
 	//
 	var charter2 = new DtxChart.Charter();
 	
 	$('#Draw').click(function(e){
-		if(currDtxObject){
-			var scaleFactor = Number($('#SelectScaleFactor').val());
-			var pageHeight = Number($('#SelectPageHeight').val());
-			drawDtxChart(currDtxObject, plotter, scaleFactor, pageHeight);
-		}		
+		//Add DOM manipulation code
+		charter2.clearDTXChart();		
+		$("#chart-container").empty();
+
+		//
+		charter2.setConfig({
+			scale: parseFloat( $('#SelectScaleFactor').val() ),
+			pageHeight: parseInt( $('#SelectPageHeight').val() ),
+			pagePerCanvas: 4
+		});
+
+		//
+		var canvasConfigArray = charter2.canvasRequired();
+		console.log("Required canvas count: ",canvasConfigArray.length);
+		//
+		createCanvasSheets(canvasConfigArray);	
+
+		charter2.setCanvasArray(canvasConfigArray);
+		charter2.drawDTXChart();	
 	});
 
 	$('#Clear').click(function(e){
-		plotter.clear();
-		$('#openFile').val("");
-		currDtxObject = null;
+		
 		charter2.clearDTXChart();
+
+		//Add DOM manipulation code
+		$("#chart-container").empty();
 	});
 
 	$('#openFile').change(function(e){
@@ -52,36 +76,44 @@ $(document).ready(function(){
 				//console.log(contents);
 
 				//Parse contents and create dtx-object from it
-				var dtx_parser = new DtxParser();
-				var status = dtx_parser.parseDtxText(contents);
+				//var dtx_parser = new DtxParser();
+				//var status = dtx_parser.parseDtxText(contents);
 
 				//
 				var dtxparserv2 = new DtxChart.Parser();
 				var ret = dtxparserv2.parseDtxText(contents);
 				if(ret){
-					var dtxdataObject = dtxparserv2.getDtxDataObject();
+					dtxdataObject = dtxparserv2.getDtxDataObject();
 					console.log(dtxdataObject);
 					//console.log(JSON.stringify(dtxdataObject));
 
-					var lineMapper = new DtxChart.LinePositionMapper(dtxdataObject);
-					charter2.setDtxData(dtxdataObject, lineMapper);
-					var canvasConfigArray = charter2.canvasRequired();
-					console.log(canvasConfigArray);
+					lineMapper = new DtxChart.LinePositionMapper(dtxdataObject);
+					charter2.setDtxData(dtxdataObject, lineMapper);//
+					charter2.setConfig({
+						scale: parseFloat( $('#SelectScaleFactor').val() ),
+						pageHeight: parseInt( $('#SelectPageHeight').val() ),
+						pagePerCanvas: 4
+					});
+
 					//
-					//canvasConfigArray[0].backgroundColor = "#000000";
-					canvasConfigArray[0].elementId = "c2";//Update directly
+					var canvasConfigArray = charter2.canvasRequired();
+					console.log("Required canvas count: ",canvasConfigArray.length);
+					//
+					createCanvasSheets(canvasConfigArray);
+
+					//canvasConfigArray[0].backgroundColor = "#000000";					
 					charter2.setCanvasArray(canvasConfigArray);
 					charter2.drawDTXChart();
 				}
 
-				if(status){
-					//Draw based on loaded dtxObject
-					var scaleFactor = parseFloat($('#SelectScaleFactor').val());
-					var pageHeight = Number($('#SelectPageHeight').val());
-					currDtxObject = dtx_parser.dtxObject;
-					//console.log(currDtxObject);
-					drawDtxChart(currDtxObject, plotter, scaleFactor, pageHeight);	
-				}
+				// if(status){
+				// 	//Draw based on loaded dtxObject
+				// 	var scaleFactor = parseFloat($('#SelectScaleFactor').val());
+				// 	var pageHeight = Number($('#SelectPageHeight').val());
+				// 	currDtxObject = dtx_parser.dtxObject;
+				// 	//console.log(currDtxObject);
+				// 	//drawDtxChart(currDtxObject, plotter, scaleFactor, pageHeight);	
+				// }
 			}
 			r.readAsText(f,encoding);
 		}
