@@ -147,9 +147,9 @@ var DtxChart = (function(mod){
      */
     Charter.prototype.setConfig = function(config){
         //
-        this._scale = limit(typeof config.scale !== "number" ? config.scale : DEFAULT_SCALE, MIN_SCALE, MAX_SCALE);
-        this._pageHeight = limit(typeof config.pageHeight !== "number" ? config.pageHeight : DEFAULT_PAGE_HEIGHT, MIN_PAGE_HEIGHT, MAX_PAGE_HEIGHT);
-        this._pagePerCanvas = limit(typeof config.pagePerCanvas !== "number" ? config.pagePerCanvas : DEFAULT_PAGEPERCANVAS, MIN_PAGEPERCANVAS, MAX_PAGEPERCANVAS);
+        this._scale = limit(typeof config.scale === "number" ? config.scale : DEFAULT_SCALE, MIN_SCALE, MAX_SCALE);
+        this._pageHeight = limit(typeof config.pageHeight === "number" ? config.pageHeight : DEFAULT_PAGE_HEIGHT, MIN_PAGE_HEIGHT, MAX_PAGE_HEIGHT);
+        this._pagePerCanvas = limit(typeof config.pagePerCanvas === "number" ? config.pagePerCanvas : DEFAULT_PAGEPERCANVAS, MIN_PAGEPERCANVAS, MAX_PAGEPERCANVAS);
 
     }
 
