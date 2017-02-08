@@ -567,9 +567,9 @@ var DtxChart = (function(mod){
      */
     ChartSheet.prototype.canvasWidthHeightPages = function(){
         return {
-            width: this._canvasObject.width,
-            height: this._canvasObject.height,
-            pages: this._canvasObject.pages
+            width: this._canvasConfig.width,
+            height: this._canvasConfig.height,
+            pages: this._canvasConfig.pages
         };
     };
 

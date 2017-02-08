@@ -71,7 +71,7 @@ var DtxChart = (function(mod){
             positionSize.x, 
             positionSize.y, 
             positionSize.x + positionSize.width, 
-            positionSize.y
+            positionSize.y + positionSize.height
         ],{
             stroke: drawOptions.stroke,
             strokeWidth: drawOptions.strokeWidth
