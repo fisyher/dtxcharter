@@ -30,13 +30,14 @@ var DtxChart = (function(mod){
 
     //A collection of width/height constants for positioning purposes. Refer to diagram for details 
     var DtxChartCanvasMargins = {
-        "A": 50,//Info section height
-        "B": 10,//Top margin of page
+        "A": 45,//Info section height
+        "B": 16,//Top margin of page
         "C": 30,//Left margin of chart
         "D": 30,//Right margin of chart
-        "E": 60,//Bottom margin of page
+        "E": 40,//Bottom margin of page
         "F": 20,//Right margin of each page (Except the last page for each canvas)
-        "G": 10,//Top/Bottom margin of Last/First line from the top/bottom border of each page
+        "G": 12,//Top/Bottom margin of Last/First line from the top/bottom border of each page
+        "H": 5, //Bottom Margin height of Sheet Number text from the bottom edge of canvas
     };
 
     var DtxChartPageMarkerHorizontalPositions = {
@@ -54,7 +55,7 @@ var DtxChart = (function(mod){
 		"RC":210,
 		"RD":230,
 		"RightBorder": 249,
-		"BarNum":10,
+		"BarNum":18,
         "width": 300
     };
 
@@ -95,7 +96,8 @@ var DtxChart = (function(mod){
         "BarLine": "#ffffff",
         "QuarterLine": "#4e4e4e",
         "EndLine": "#ff0000",
-        "TitleLine": "#ffffff"
+        "TitleLine": "#ffffff",
+        "BorderLine": "#b7b7b7"
     };
 
     var DtxTextColor = {
@@ -296,9 +298,16 @@ var DtxChart = (function(mod){
         //Draw the end line
         this.drawEndLine(this._positionMapper.chartLength());
 
-        //Draw Chartsheet
+        //
+        this.drawPageFrames();
+
+        //Draw Chartsheet Number if there are more than 1 sheets used
         if(this._chartSheets.length > 1){
             for(var i in this._chartSheets){
+                if(!this._chartSheets[i]){
+                    console.log("Sheet unavailable! Unable to draw");
+                    continue;
+                }
                 this.drawSheetNumber(parseInt(i), this._chartSheets.length);
             }
         }        
@@ -308,6 +317,64 @@ var DtxChart = (function(mod){
             this._chartSheets[i].update();
         }
 
+    };
+
+    Charter.prototype.drawPageFrames = function(){
+        for(var i in this._chartSheets){
+            if(!this._chartSheets[i]){
+                console.log("Sheet unavailable! Unable to draw");
+                continue;
+            }
+            var chartSheet = this._chartSheets[i];
+
+            //Iterate for each page, draw the frames
+            var canvasWidthHeightPages = chartSheet.canvasWidthHeightPages();
+            var pageCount = canvasWidthHeightPages.pages;
+            var canvasHeight = canvasWidthHeightPages.height;
+            for(var j = 0; j<pageCount; ++j){
+                var pageStartXPos = DtxChartCanvasMargins.C + (DtxChartPageMarkerHorizontalPositions.width + DtxChartCanvasMargins.F) * j;
+                var lineWidth = DtxChartPageMarkerHorizontalPositions.RightBorder - DtxChartPageMarkerHorizontalPositions.LeftBorder;
+                //Draw Top Border Line
+                chartSheet.addLine({x: pageStartXPos + DtxChartPageMarkerHorizontalPositions.LeftBorder,
+                                y: DtxChartCanvasMargins.A + DtxChartCanvasMargins.B,
+                                width: lineWidth,
+                                height: 0
+                                }, {
+                                    stroke: DtxBarLineColor.BorderLine,
+		                            strokeWidth: 3,
+                                });
+
+                //Draw Bottom Border Line
+                chartSheet.addLine({x: pageStartXPos + DtxChartPageMarkerHorizontalPositions.LeftBorder,
+                                y: canvasHeight - DtxChartCanvasMargins.E,
+                                width: lineWidth,
+                                height: 0
+                                }, {
+                                    stroke: DtxBarLineColor.BorderLine,
+		                            strokeWidth: 3,
+                                });
+                //Draw Left Border Line
+                chartSheet.addLine({x: pageStartXPos + DtxChartPageMarkerHorizontalPositions.LeftBorder,
+                                y: DtxChartCanvasMargins.A + DtxChartCanvasMargins.B,
+                                width: 0,
+                                height: this._pageHeight + DtxChartCanvasMargins.G * 2
+                                }, {
+                                    stroke: DtxBarLineColor.BorderLine,
+		                            strokeWidth: 3,
+                                });
+
+                //Draw Right Border Line
+                chartSheet.addLine({x: pageStartXPos + DtxChartPageMarkerHorizontalPositions.RightBorder,
+                                y: DtxChartCanvasMargins.A + DtxChartCanvasMargins.B,
+                                width: 0,
+                                height: this._pageHeight + DtxChartCanvasMargins.G * 2
+                                }, {
+                                    stroke: DtxBarLineColor.BorderLine,
+		                            strokeWidth: 3,
+                                });
+            }
+
+        }
     };
 
     Charter.prototype.drawSheetNumber = function(currentSheet, sheetCount){
@@ -323,13 +390,14 @@ var DtxChart = (function(mod){
         var text = "Part " + (currentSheet + 1) + " of " + sheetCount;
         
         this._chartSheets[currentSheet].addText({
-                            x: width - DtxChartCanvasMargins.D - 100,
-                            y: height - 10, //A is the Line divider, The text will be slightly above it
+                            x: width - DtxChartCanvasMargins.D - 85,
+                            y: height - DtxChartCanvasMargins.H, //
                             }, text, {
                             fill: DtxTextColor.PageNumber,
                             fontSize: DtxFontSizes.PageNumber,
                             fontFamily: "Arial",
                             originY: "bottom",
+                            textAlign: "right"
                         });
     };
 
