@@ -1,16 +1,28 @@
 body {
-    background-image: url("../assets/images/background.jpg");
+    background-color: #333333;
+	margin-top: 60px;
 }
 
-#canvasContainer1{
-	overflow: auto;
+.top-bar{
+	height:5px;
+    background:#333333;
+    margin-bottom:1px;
 }
 
-#canvasContainer2{
-	overflow: auto;
+footer{
+    text-align: center;
+    padding:20px 0;
+    font-weight:bold;
+    background:#e1e1e1;
+	width: 100%;
+	bottom: 0px;
+}
+
+.navbar{
+	margin-bottom: 1px;
 }
 
 .canvasSheetContainer{
 	overflow: auto;
-	height:865px;
+	height:850px;
 }

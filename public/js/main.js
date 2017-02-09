@@ -22,7 +22,7 @@ $(document).ready(function(){
 	//
 	function createCanvasSheets(canvasConfigArray){
 		for(var i in canvasConfigArray){
-			$("#chart-container").append('<div class="row col-md-offset-1"><div id="canvasContainer2" class="col-md-10 canvasSheetContainer"><canvas id="'+ canvasConfigArray[i].elementId +'"></canvas></div></div>');
+			$("#chart_container").append('<div class="row"><div class="col-md-10 canvasSheetContainer"><canvas id="'+ canvasConfigArray[i].elementId +'"></canvas></div></div>');
 		}
 	}
 
@@ -38,7 +38,7 @@ $(document).ready(function(){
 	$('#Draw').click(function(e){
 		//Add DOM manipulation code
 		charter2.clearDTXChart();		
-		$("#chart-container").empty();
+		$("#chart_container").empty();
 
 		//
 		charter2.setConfig({
@@ -62,7 +62,8 @@ $(document).ready(function(){
 		charter2.clearDTXChart();
 
 		//Add DOM manipulation code
-		$("#chart-container").empty();
+		$('#openFile').val('');
+		$("#chart_container").empty();
 	});
 
 	$('#openFile').change(function(e){
