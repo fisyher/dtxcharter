@@ -8,6 +8,7 @@ var DtxChart = (function(mod){
 
     //Constants
     var BASEBPM = 180.00;
+    var QUARTER_BEAT_LINES = 48;
 
     /**
      *Constructor 
@@ -20,7 +21,9 @@ var DtxChart = (function(mod){
     }
 
     /**
-     * 
+     * Returns: The absolute position of a given bar number and line number position.
+     * Absolute position is defined as the number of 1/192 beats elapsed at 180 BPM for standard 4/4 bar
+     * 1 Abs Pos is equal to 60/(180*48) seconds
      */
     LinePositionMapper.prototype.absolutePositionOfLine = function(barNumber, lineNumber){
         //check barNumber
@@ -65,22 +68,52 @@ var DtxChart = (function(mod){
 
     }
 
+    LinePositionMapper.prototype.estimateSongDuration = function(){
+        var distance = this.endLineAbsPosition - this.bgmStartLineAbsPosition;
+
+        //Duration in seconds
+        return (60*distance)/(BASEBPM * QUARTER_BEAT_LINES);
+
+    };
+
+    /**
+     * Useful for getting the bgm start line for drawing on chart
+     */
+    LinePositionMapper.prototype.bgmStartAbsolutePosition = function(){
+        return this.bgmStartLineAbsPosition;
+    };
+
+    /**
+     * Returns the length of entire chart in absolute position number
+     */
     LinePositionMapper.prototype.chartLength = function(){
         return this.endLineAbsPosition;
     }
 
-    //This method does not check for correctness of values
-    //dtxdata data correctness to be done inside parser instead
+    /**
+     * Remarks: This method does not check for correctness of values
+     * dtxdata data correctness to be done inside parser instead
+     */    
     LinePositionMapper.prototype._computePositions = function(dtxdata){
 
         var currBPM = dtxdata.chartInfo.bpm;//Initial BPM, this variable keeps changing within the nested loop as bpm markers are iterated through
         var currBarStartLineAbsPos = 0.0;//Starts at 0.0 for the first bar
+        var bgmChipFound = false;//Flag to indicate bgm marker has been found the first time. Subsequent bgm chips are ignored.
+        var bgmChipBarLinePos = null;//will be object of {barNum: <number>, pos: <number>} after bgmChip is found
         
         for(var i in dtxdata.barGroups){
-            //console.log(i);
+            //Check for earliest bgm chip
+            if(!bgmChipFound && dtxdata.barGroups[i]["bgmChipArray"]){
+                bgmChipBarLinePos = {
+                    barNum: parseInt(i),
+                    pos: dtxdata.barGroups[i]["bgmChipArray"][0].pos
+                };
+                bgmChipFound = true;
+            }
+            //Create and Initialize the barPosInfo object for current bar
             var barPosInfo = {
                 "lines": dtxdata.barGroups[i]["lines"],
-                "bpmMarkerArray": dtxdata.barGroups[i]["bpmMarkerArray"] || [],//Note that in actual JSON bpmMarkerArray property may not exist so we need to check and set default empty array if not available
+                "bpmMarkerArray": dtxdata.barGroups[i]["bpmMarkerArray"] ? dtxdata.barGroups[i]["bpmMarkerArray"] : [],//Note that in actual JSON bpmMarkerArray property may not exist so we need to check and set default empty array if not available
                 "absStartPos": currBarStartLineAbsPos,
                 "barStartBPM": currBPM//Need to store this info, otherwise have to re-compute from previous bars!
             };
@@ -119,6 +152,15 @@ var DtxChart = (function(mod){
             this.barGroups.push(barPosInfo);
         }
 
+        //Calculate the actual absolute position of first bgmChip here if found
+        if(bgmChipFound){
+            var absPos = this.absolutePositionOfLine(bgmChipBarLinePos.barNum, bgmChipBarLinePos.pos);
+            if(absPos){
+                this.bgmStartLineAbsPosition = absPos;
+            }
+        }
+
+
         //The end line does not belong to any bar and is one line after very last line of last bar
         //This is useful information for chart drawing class
         this.endLineAbsPosition = currBarStartLineAbsPos;
@@ -130,6 +172,7 @@ var DtxChart = (function(mod){
     LinePositionMapper.prototype._initialize = function(){
         this.barGroups = [];
         this.endLineAbsPosition = 0.0;
+        this.bgmStartLineAbsPosition = 0.0;
     };
 
     //For internal reference

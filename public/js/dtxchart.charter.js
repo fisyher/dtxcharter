@@ -24,7 +24,7 @@ var DtxChart = (function(mod){
 
     var DEFAULT_PAGEPERCANVAS = 20;
     var MIN_PAGEPERCANVAS = 4;
-    var MAX_PAGEPERCANVAS = 40;
+    var MAX_PAGEPERCANVAS = 24;
 
     var BEAT_LINE_GAP = 48;//192/4
 
@@ -96,6 +96,7 @@ var DtxChart = (function(mod){
         "BarLine": "#ffffff",
         "QuarterLine": "#4e4e4e",
         "EndLine": "#ff0000",
+        "StartLine":"#00ff00",
         "TitleLine": "#ffffff",
         "BorderLine": "#b7b7b7"
     };
@@ -295,8 +296,16 @@ var DtxChart = (function(mod){
         //Draw ChartInfo
         this.drawChartInfo(chartInfo, metadata.totalNoteCount);
 
-        //Draw the end line
-        this.drawEndLine(this._positionMapper.chartLength());
+        //Draw the start and end line
+        this.drawChartLine(this._positionMapper.bgmStartAbsolutePosition(), {
+            stroke: DtxBarLineColor.StartLine,
+            strokeWidth: 3
+        });
+
+        this.drawChartLine(this._positionMapper.chartLength(), {
+            stroke: DtxBarLineColor.EndLine,
+            strokeWidth: 3
+        });
 
         //
         this.drawPageFrames();
@@ -491,11 +500,13 @@ var DtxChart = (function(mod){
                             });
     };
 
-    Charter.prototype.drawEndLine = function(absPosition){
-        var lineColor = DtxBarLineColor.EndLine;
+    /**
+     * Draws arbitrary lines in chart. Currently used to draw start and end lines of DTX
+     */
+    Charter.prototype.drawChartLine = function(absPosition, drawOptions){
         var pixSheetPos = this.getPixelPositionOfLine(absPosition);
 
-        //Finally select the correct sheet to draw the chip
+        //
         var chartSheet = this._chartSheets[pixSheetPos.sheetIndex];
         if(!chartSheet){
             console.log("Sheet unavailable! Unable to draw");
@@ -506,10 +517,7 @@ var DtxChart = (function(mod){
                                 y: pixSheetPos.posY,
                                 width: lineWidth,
                                 height: 0
-                                }, {
-                                    stroke: lineColor,
-		                            strokeWidth: 3,
-                                });
+                                }, drawOptions);
     };
 
     Charter.prototype.drawLinesInBar = function(lineCount, barIndex){

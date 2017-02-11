@@ -196,6 +196,19 @@ var DtxChart = (function(mod){
                 });
             }
         }
+
+        //Handle BGM chip (normally only one per dtx)
+        if(rawLinesInBar.hasOwnProperty(DtxBarLabelMap.BGM_LANE)){
+            var posArray = decodeBarLine(rawLinesInBar[DtxBarLabelMap.BGM_LANE], lineCountInCurrentBar);
+
+            newBarGroup["bgmChipArray"] = [];
+            for(var i=0; i<posArray.length; i++){
+                //var bgmChipLabel = posArray[i]["label"];                
+                newBarGroup["bgmChipArray"].push({
+                    "pos":posArray[i]["pos"]
+                });
+            }
+        }
         
         //Handle the actual drum chips
         for(var prop in rawLinesInBar){
@@ -399,7 +412,7 @@ var DtxChart = (function(mod){
     inputLine - A string
     totalLineCount - A number
     returns:
-    chipPosArray - [{pos:<Number>,label:<String>}]
+    chipPosArray - [{pos:<number>,label:<string>}]
     */    
     function decodeBarLine(inputLine, totalLineCount){
         //Split barline into array of 2 characters
@@ -466,6 +479,7 @@ var DtxChart = (function(mod){
     
     //Fixed mapping values
     var DtxBarLabelMap = {
+        BGM_LANE: "01",
 		BAR_LENGTH_CHANGE_LABEL: "02",
 		LINE_SHOW_HIDE_LABEL: "C2",
 		BPM_CHANGE_LABEL: "08"
@@ -473,7 +487,7 @@ var DtxChart = (function(mod){
 
 	var DtxLaneCodeToLaneLabelMap = {
 		//New DTX Creator uses these codes
-		"1A":"LC",
+        "1A":"LC",
 		"11":"HH",
 		"18":"HH",
 		"1C":"LB",//Should be LB
