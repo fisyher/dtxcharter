@@ -37,7 +37,7 @@
                         <option value="2.50">2.50</option>
                       </select>
                   </li> 
-                  <li><p class="navbar-text">Select page height</p></li>    
+                  <li><p class="navbar-text">Page height</p></li>    
                   <li><select id="SelectPageHeight" class="btn btn-primary navbar-btn">
                       <option value="480">480</option>
                       <option value="720" selected="selected">720</option>
@@ -50,6 +50,17 @@
                       <option value="3840">3840</option>
                     </select>
                   </li>
+                  <li><p class="navbar-text">Page per canvas</p></li>    
+                  <li><select id="SelectPagePerCanvas" class="btn btn-primary navbar-btn">
+                      <option value="4" selected="selected">4</option>
+                      <option value="6">6</option>
+                      <option value="8">8</option>
+                      <option value="12">12</option>
+                      <option value="16">16</option>
+                      <option value="20">20</option>
+                      <option value="24">24</option>                      
+                    </select>
+                  </li>
                   <li><p class="navbar-text">  </p></li>
                   <li><button id='Draw' class="btn btn-default navbar-btn">Re-Draw</button></li>
                   <li><p class="navbar-text">  </p></li>  
@@ -58,11 +69,17 @@
                   </ul>               
             </div>
       </nav>
-    <div id="chart_container" class="container-fluid">
+    <div class="container-fluid">
+        <div class="row" id="placeholder">
+          <div class="col-md-10 canvasSheetContainer">
+          </div>
+        </div>
+        <div id="chart_container">
+        </div>
     </div>
-    <!--<footer>
+    <footer>
             Copyright © 2017, DTX Charter
-    </footer>-->
+    </footer>
     <script src="bower_components/jquery/dist/jquery.min.js" type="text/javascript"></script>
     <script src="bower_components/bootstrap/dist/js/bootstrap.min.js" type="text/javascript"></script>
     <script src="bower_components/fabric.js/dist/fabric.min.js" type="text/javascript"></script>
