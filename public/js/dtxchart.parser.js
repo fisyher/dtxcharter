@@ -5,7 +5,8 @@ var DtxChart = (function(mod){
     'use strict';
     var VERSION = "2.0.0";
 
-    var SUPPORTED_HEADERS = ["; Created by DTXCreator 024",
+    var SUPPORTED_HEADERS = [
+    "; Created by DTXCreator 024",
 	"; Created by DTXCreator 025(verK)",
 	"; Created by DTXCreator 020",
 	";Created by GDA Creator Professional Ver.0.10",
@@ -52,7 +53,8 @@ var DtxChart = (function(mod){
 		}
         //Check if header is supported
 		if(!checkSupportedHeader(lines[0])){
-            return;
+            console.warn('Warning: Header not supported or header is missing. Parsing may fail');
+            //return;
         }
         
         //Start processing all valid lines
@@ -399,10 +401,6 @@ var DtxChart = (function(mod){
 				break;
 			}
 		};
-		//if(HEADER !== trimLine){
-		if(!headerCheckPassed){	
-			console.error('Fail to parse: Header not supported');
-		}
         
         return headerCheckPassed;
     }
