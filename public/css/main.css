@@ -11,7 +11,7 @@ body {
 
 footer{
     text-align: center;
-    padding:20px 0;
+    padding:10px 0;
     font-weight:bold;
     background:#e1e1e1;
 	width: 100%;
@@ -24,5 +24,9 @@ footer{
 
 .canvasSheetContainer{
 	overflow: auto;
-	height:850px;
+	height:855px;
+}
+
+#dtxgraph{
+    margin-left: 10px;
 }
