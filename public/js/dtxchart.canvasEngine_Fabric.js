@@ -102,6 +102,11 @@ var DtxChart = (function(mod){
             originX: textOptions.originX ? textOptions.originX : "left"
         });
 
+        var currTextWidth = textObject.width;
+        if(positionSize.width && currTextWidth >  positionSize.width){
+            textObject.scaleToWidth(positionSize.width/currTextWidth); //Scale becomes relative??? Behaviour different from jsfiddle...
+        }
+
         this._canvasObject.add(textObject);
     }
 
