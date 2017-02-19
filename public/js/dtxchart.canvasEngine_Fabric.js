@@ -104,7 +104,7 @@ var DtxChart = (function(mod){
 
         var currTextWidth = textObject.width;
         if(positionSize.width && currTextWidth >  positionSize.width){
-            textObject.scaleToWidth(positionSize.width/currTextWidth); //Scale becomes relative??? Behaviour different from jsfiddle...
+            textObject.scaleToWidth(positionSize.width); //positionSize.width/currTextWidth required for laptop browser but why? Scale becomes relative??? Behaviour different from jsfiddle...
         }
 
         this._canvasObject.add(textObject);
