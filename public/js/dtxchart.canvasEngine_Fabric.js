@@ -123,6 +123,10 @@ var DtxChart = (function(mod){
         this._canvasObject.renderAll();
     }
 
+    function setZoom(factor){
+        this._canvasObject.setZoom(factor);
+    }
+
    //
     mod.CanvasEngine = {
         createCanvas: createCanvas,
@@ -130,6 +134,7 @@ var DtxChart = (function(mod){
         addRectangle: addRectangle,
         addLine: addLine,
         addText: addText,
+        setZoom: setZoom,
         clear: clear,
         update: update
     };
