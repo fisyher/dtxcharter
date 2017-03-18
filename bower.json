@@ -1,0 +1,29 @@
+{
+  "name": "dtxcharter",
+  "description": "Reads in dtx files and draws notes on canvas",
+  "main": "index.js",
+  "authors": [
+    "Fisyher"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "dtx",
+    "html5",
+    "canvas"
+  ],
+  "homepage": "https://github.com/fisyher/dtxcharter",
+  "moduleType": [],
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "public/bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "fabric.js": "fabric#1.7.3"
+  }
+}
