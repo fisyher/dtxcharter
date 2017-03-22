@@ -492,8 +492,10 @@ var DtxChart = (function(mod){
         var songMinutes = Math.floor(songLength/60) + "";
         var songSeconds = Math.round(songLength%60).toFixed(0);
         songSeconds = songSeconds < 10 ? "0" + songSeconds : "" + songSeconds;//Convert to string with fixed 2 characters
+
+        var diffLevel = this._chartType === "Vmix" ? Math.floor(chartInfo.level*10).toFixed(0) : chartInfo.level + "";
         
-        var otherInfo = "LV:" + chartInfo.level + "  BPM:" + chartInfo.bpm + "  Length:" + songMinutes + ":" + songSeconds +"  Total Notes:" + totalNoteCount;
+        var otherInfo = "LV:" + diffLevel + "  BPM:" + chartInfo.bpm + "  Length:" + songMinutes + ":" + songSeconds +"  Total Notes:" + totalNoteCount;
 
         var otherInfoPosX = DtxChartCanvasMargins.C + 
         ( this._DTXDrawParameters.ChipHorizontalPositions.width + DtxChartCanvasMargins.F ) * MIN_PAGEPERCANVAS;//Information appears at 4 page wide
