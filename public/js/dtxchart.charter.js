@@ -109,12 +109,12 @@ var DtxChart = (function(mod){
     };
 
     var DtxBarLineColor = {
-        "BarLine": "#696969",
+        "BarLine": "#707070",
         "QuarterLine": "#4b4c4a",
         "EndLine": "#ff0000",
         "StartLine":"#00ff00",
-        "TitleLine": "#696969",
-        "BorderLine": "#696969",
+        "TitleLine": "#707070",
+        "BorderLine": "#707070",
         "BPMMarkerLine": "#eeffab"
     };
 
@@ -144,7 +144,7 @@ var DtxChart = (function(mod){
     function Charter(){
         this._dtxdata = null;
         this._positionMapper = null;
-
+        this._pageList = null;
         //
         this._scale = DEFAULT_SCALE;
         this._pageHeight = DEFAULT_PAGE_HEIGHT;
@@ -153,7 +153,7 @@ var DtxChart = (function(mod){
         this._chartSheets = [];
         this._pageCount = 0;
         this._heightPerCanvas = 0;
-
+        this._barAligned = false;
         this._chartType = "full";
         this._DTXDrawParameters = {};
     }
@@ -175,12 +175,20 @@ var DtxChart = (function(mod){
      *   pageHeight (Number): The height for each page in pixels. Min is 960 pixel, Max is 3840, Default is 1920 pixel
      *   pagePerCanvas (Number): The number of pages to be rendered per canvas element. Min 4 pages and max 20
      *   chartType {String}: Type of chart to draw. Valid options are "full", "Gitadora", "Vmix". Defaults to "full"
+     *   barAligned (bool): true if all pages are drawn with only full bars in it.
      */
     Charter.prototype.setConfig = function(config){
         //
         this._scale = limit(typeof config.scale === "number" ? config.scale : DEFAULT_SCALE, MIN_SCALE, MAX_SCALE);
         this._pageHeight = limit(typeof config.pageHeight === "number" ? config.pageHeight : DEFAULT_PAGE_HEIGHT, MIN_PAGE_HEIGHT, MAX_PAGE_HEIGHT);
         this._pagePerCanvas = limit(typeof config.pagePerCanvas === "number" ? config.pagePerCanvas : DEFAULT_PAGEPERCANVAS, MIN_PAGEPERCANVAS, MAX_PAGEPERCANVAS);
+
+        this._barAligned = config.barAligned === undefined ? false : config.barAligned;
+        if(this._barAligned)
+        {
+            this._pageList = this.computeBarAlignedPositions();
+            console.log(this._pageList);
+        }
 
         this._chartType = config.chartType? config.chartType : "full";//full, Gitadora, Vmix
         this.createDrawParameters(this._chartType);
@@ -195,8 +203,11 @@ var DtxChart = (function(mod){
         //this._chartSheets = [];
         this._pageCount = 0;
         this._heightPerCanvas = 0;
+        this._barAligned = false;
         this._chartType = "full";
         this._DTXDrawParameters = {};
+
+        this._pageList = null;
     };
 
     Charter.prototype.createDrawParameters = function(chartType){
@@ -236,7 +247,7 @@ var DtxChart = (function(mod){
 
         //Find total number of pages required
         var chartLength = this._positionMapper.chartLength();
-        var requiredPageCount = Math.ceil((chartLength * this._scale) / this._pageHeight);
+        var requiredPageCount = this._barAligned ? this._pageList.length : Math.ceil((chartLength * this._scale) / this._pageHeight);
         this._pageCount = requiredPageCount;
 
         var canvasCount = Math.ceil(requiredPageCount / this._pagePerCanvas);
@@ -280,6 +291,53 @@ var DtxChart = (function(mod){
         }
 
         return canvasConfigArray;
+    };
+
+    Charter.prototype.computeBarAlignedPositions = function(){
+        //
+        var pageList = [];
+        var barGroups = this._positionMapper.barGroups;
+        var positionMapper = this._positionMapper;
+        var currPage = 0;
+        var currAccumulatedHeight = 0;
+        var pageHeightLimit = this._pageHeight;
+
+        //First page always starts with bar 0
+        pageList.push({
+            "startBarIndex" : 0,
+            "endBarIndex": null
+        });
+
+        for(var i=0; i < barGroups.length; ++i ){
+            
+            //Compute pixel height of current bar
+            var currBarStartAbsPos = barGroups[i].absStartPos;
+            var nextBarStartAbsPos = i === barGroups.length - 1 ? positionMapper.chartLength() : barGroups[i+1].absStartPos;   
+            var pixelHeightOfCurrentBar = (nextBarStartAbsPos - currBarStartAbsPos) * this._scale;
+
+            //Check end height for current bar to ensure it fit within page
+            if(currAccumulatedHeight + pixelHeightOfCurrentBar <= pageHeightLimit){
+                currAccumulatedHeight += pixelHeightOfCurrentBar;
+            }
+            else{
+                //
+                pageList[pageList.length - 1]["endBarIndex"] = i - 1;
+
+                //This bar will start on next page
+                pageList.push({
+                    "startBarIndex" : i
+                });
+                currAccumulatedHeight = 0;
+                //We have to restart the analysis for this bar again on the next iteration
+                --i;
+            }
+
+        }
+
+        pageList[pageList.length - 1]["endBarIndex"] = barGroups.length - 1;
+
+        return pageList;
+
     };
 
     /**
@@ -388,6 +446,7 @@ var DtxChart = (function(mod){
                 continue;
             }
             var chartSheet = this._chartSheets[i];
+            var sheetIndex = parseInt(i);
 
             //Iterate for each page, draw the frames
             var canvasWidthHeightPages = chartSheet.canvasWidthHeightPages();
@@ -397,20 +456,48 @@ var DtxChart = (function(mod){
                 var pageStartXPos = DtxChartCanvasMargins.C + (this._DTXDrawParameters.ChipHorizontalPositions.width + DtxChartCanvasMargins.F) * j;
                 var lineWidth = this._DTXDrawParameters.ChipHorizontalPositions.RightBorder - this._DTXDrawParameters.ChipHorizontalPositions.LeftBorder;
                 
+                //
+                if(this._barAligned){
+                    //Abs page index;
+                    var pageAbsIndex = sheetIndex*this._pagePerCanvas + j;
+
+                    //Draw End bar line for the last bar within each page
+                    var endPageBarLineAbsPos = pageAbsIndex === this._pageList.length - 1 ? this._positionMapper.chartLength() : this._positionMapper.barGroups[this._pageList[pageAbsIndex+1].startBarIndex].absStartPos; 
+                    var startPageBarLineAbsPos = this._positionMapper.barGroups[this._pageList[pageAbsIndex].startBarIndex].absStartPos;
+
+                    var endPageBarLineRelPixHeight = (endPageBarLineAbsPos - startPageBarLineAbsPos)*this._scale;
+                    var currPageHeight = endPageBarLineRelPixHeight;
+                }
+                else{
+                    var currPageHeight = this._pageHeight;
+                }
+
                 //Draw Page Body
                 chartSheet.addRectangle({x: pageStartXPos + this._DTXDrawParameters.ChipHorizontalPositions.LeftBorder,
                                     y: canvasHeight - DtxChartCanvasMargins.E,
                                     width: this._DTXDrawParameters.ChipHorizontalPositions.width - this._DTXDrawParameters.ChipHorizontalPositions.LeftBorder,
-                                    height: this._pageHeight + DtxChartCanvasMargins.G * 2
+                                    height: currPageHeight + DtxChartCanvasMargins.G * 2
                                     }, {
                                         fill: DtxFillColor.PageFill,
                                         originY: "bottom"
                                     });
                 
+                if(this._barAligned){                    
+
+                    chartSheet.addLine({x: pageStartXPos + this._DTXDrawParameters.ChipHorizontalPositions.LeftBorder,
+                                y: canvasHeight - DtxChartCanvasMargins.E - DtxChartCanvasMargins.G - endPageBarLineRelPixHeight,
+                                width: this._DTXDrawParameters.ChipHorizontalPositions.width - this._DTXDrawParameters.ChipHorizontalPositions.LeftBorder,
+                                height: 0
+                                }, {
+                                    stroke: DtxBarLineColor.BarLine,
+		                            strokeWidth: 2,
+                                });
+
+                } 
                 
                 //Draw Top Border Line
                 chartSheet.addLine({x: pageStartXPos + this._DTXDrawParameters.ChipHorizontalPositions.LeftBorder,
-                                y: DtxChartCanvasMargins.A + DtxChartCanvasMargins.B,
+                                y: canvasHeight - DtxChartCanvasMargins.E - (currPageHeight + DtxChartCanvasMargins.G * 2),
                                 width: this._DTXDrawParameters.ChipHorizontalPositions.width - this._DTXDrawParameters.ChipHorizontalPositions.LeftBorder,
                                 height: 0
                                 }, {
@@ -429,9 +516,9 @@ var DtxChart = (function(mod){
                                 });
                 //Draw Left Border Line
                 chartSheet.addLine({x: pageStartXPos + this._DTXDrawParameters.ChipHorizontalPositions.LeftBorder,
-                                y: DtxChartCanvasMargins.A + DtxChartCanvasMargins.B,
+                                y: canvasHeight - DtxChartCanvasMargins.E,
                                 width: 0,
-                                height: this._pageHeight + DtxChartCanvasMargins.G * 2
+                                height: -(currPageHeight + DtxChartCanvasMargins.G * 2)
                                 }, {
                                     stroke: DtxBarLineColor.BorderLine,
 		                            strokeWidth: 3,
@@ -439,9 +526,9 @@ var DtxChart = (function(mod){
 
                 //Draw Inner Right Border Line
                 chartSheet.addLine({x: pageStartXPos + this._DTXDrawParameters.ChipHorizontalPositions.RightBorder,
-                                y: DtxChartCanvasMargins.A + DtxChartCanvasMargins.B,
+                                y: canvasHeight - DtxChartCanvasMargins.E,
                                 width: 0,
-                                height: this._pageHeight + DtxChartCanvasMargins.G * 2
+                                height: -(currPageHeight + DtxChartCanvasMargins.G * 2)
                                 }, {
                                     stroke: DtxBarLineColor.BorderLine,
 		                            strokeWidth: 3,
@@ -449,9 +536,9 @@ var DtxChart = (function(mod){
 
                 //Draw Outer Right Border Line
                 chartSheet.addLine({x: pageStartXPos + this._DTXDrawParameters.ChipHorizontalPositions.width,
-                                y: DtxChartCanvasMargins.A + DtxChartCanvasMargins.B,
+                                y: canvasHeight - DtxChartCanvasMargins.E,
                                 width: 0,
-                                height: this._pageHeight + DtxChartCanvasMargins.G * 2
+                                height: -(currPageHeight + DtxChartCanvasMargins.G * 2)
                                 }, {
                                     stroke: DtxBarLineColor.BorderLine,
 		                            strokeWidth: 3,
@@ -733,7 +820,7 @@ var DtxChart = (function(mod){
     /**
      * Method: getPixelPositionOfLine
      * Parameter:
-     * absolutePositon - The absolute position of the chart
+     * absolutePositon - The absolute position of the a line
      */
     Charter.prototype.getPixelPositionOfLine = function(absolutePositon){
         //Check if in range of chart
@@ -742,30 +829,63 @@ var DtxChart = (function(mod){
             return;
         }
 
-        //
-        var pageIndex = Math.floor((absolutePositon * this._scale) / this._pageHeight);
+        if(this._barAligned)
+        {
+            //TODO:
+            var pageIndex;
 
-        if(pageIndex < 0 || pageIndex >= this._pageCount){
-            console.error("absolutePositon is out of range of the charter!");
-            return;
+            var relativeAbsPos = 0;
+
+            //Iterate from the back
+            //Find out which page this position falls within
+            for(var i = this._pageList.length - 1; i >= 0; --i){
+                var lowerLimit = this._positionMapper.barGroups[this._pageList[i].startBarIndex].absStartPos;
+                relativeAbsPos = absolutePositon - lowerLimit;//Will be negative until it first falls within the page
+                if(relativeAbsPos >= 0){
+                    pageIndex = i;
+                    break;//found
+                }
+            }
+            //
+            var sheetIndex = Math.floor( pageIndex / this._pagePerCanvas );
+            var sheetPageIndex = pageIndex % this._pagePerCanvas;
+            var relativeYPixPos = relativeAbsPos * this._scale; 
+
+            //Calculate X,Y position of line's leftmost point
+            var actualPixHeightPosofLine = this._heightPerCanvas - DtxChartCanvasMargins.E - DtxChartCanvasMargins.G - relativeYPixPos;
+            var actualPixWidthPosofLine = DtxChartCanvasMargins.C + 
+            ( this._DTXDrawParameters.ChipHorizontalPositions.width + DtxChartCanvasMargins.F ) * sheetPageIndex;
+
+            return {
+                sheetIndex: sheetIndex,
+                posX: actualPixWidthPosofLine,
+                posY: actualPixHeightPosofLine
+            };
         }
+        else{
+            var pageIndex = Math.floor((absolutePositon * this._scale) / this._pageHeight);
 
-        //
-        var sheetIndex = Math.floor( pageIndex / this._pagePerCanvas );
-        var sheetPageIndex = pageIndex % this._pagePerCanvas;
-        var remainingRelativePos = (absolutePositon * this._scale) % this._pageHeight;
-        
-        //Calculate X,Y position of line's leftmost point
-        var actualPixHeightPosofLine = this._heightPerCanvas - DtxChartCanvasMargins.E - DtxChartCanvasMargins.G - remainingRelativePos;
-        var actualPixWidthPosofLine = DtxChartCanvasMargins.C + 
-        ( this._DTXDrawParameters.ChipHorizontalPositions.width + DtxChartCanvasMargins.F ) * sheetPageIndex;
+            if(pageIndex < 0 || pageIndex >= this._pageCount){
+                console.error("absolutePositon is out of range of the charter!");
+                return;
+            }
 
-        return {
-            sheetIndex: sheetIndex,
-            posX: actualPixWidthPosofLine,
-            posY: actualPixHeightPosofLine
-        };
+            //
+            var sheetIndex = Math.floor( pageIndex / this._pagePerCanvas );
+            var sheetPageIndex = pageIndex % this._pagePerCanvas;
+            var remainingRelativePos = (absolutePositon * this._scale) % this._pageHeight;
+            
+            //Calculate X,Y position of line's leftmost point
+            var actualPixHeightPosofLine = this._heightPerCanvas - DtxChartCanvasMargins.E - DtxChartCanvasMargins.G - remainingRelativePos;
+            var actualPixWidthPosofLine = DtxChartCanvasMargins.C + 
+            ( this._DTXDrawParameters.ChipHorizontalPositions.width + DtxChartCanvasMargins.F ) * sheetPageIndex;
 
+            return {
+                sheetIndex: sheetIndex,
+                posX: actualPixWidthPosofLine,
+                posY: actualPixHeightPosofLine
+            };
+        }
     };
 
     /**
