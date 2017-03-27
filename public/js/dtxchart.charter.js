@@ -33,7 +33,7 @@ var DtxChart = (function(mod){
     //A collection of width/height constants for positioning purposes. Refer to diagram for details 
     var DtxChartCanvasMargins = {
         "A": 58,//Info section height
-        "B": 8,//Top margin of page//31
+        "B": 2,//Top margin of page//31
         "C": 3,//Left margin of chart
         "D": 3,//Right margin of chart
         "E": 30,//Bottom margin of page
@@ -152,7 +152,7 @@ var DtxChart = (function(mod){
 
         this._chartSheets = [];
         this._pageCount = 0;
-        this._heightPerCanvas = 0;
+        //this._heightPerCanvas = 0;
         this._barAligned = false;
         this._chartType = "full";
         this._DTXDrawParameters = {};
@@ -202,7 +202,7 @@ var DtxChart = (function(mod){
 
         //this._chartSheets = [];
         this._pageCount = 0;
-        this._heightPerCanvas = 0;
+        //this._heightPerCanvas = 0;
         this._barAligned = false;
         this._chartType = "full";
         this._DTXDrawParameters = {};
@@ -236,7 +236,6 @@ var DtxChart = (function(mod){
      * and return an array of canvasConfig objects for the calling object to dynamically creat <canvas> elements based on provided information.
      * Returns: A canvasConfigArray object, which is an array of canvasConfig object
      *      pages - The number of pages in each canvas 
-            pageHeight - The height of each page. A page is a panel where all chips and beat lines are drawn within
             width - Canvas width
             height - Canvas height
             backgroundColor - Default is black
@@ -255,7 +254,7 @@ var DtxChart = (function(mod){
 
         //Height required for all canvas
         var heightPerCanvas = this._pageHeight + DtxChartCanvasMargins.A + DtxChartCanvasMargins.B + DtxChartCanvasMargins.E + DtxChartCanvasMargins.G * 2;
-        this._heightPerCanvas = heightPerCanvas;
+        //this._heightPerCanvas = heightPerCanvas;
 
         //Width required for all canvas and last canvas
         var widthPerCanvas = DtxChartCanvasMargins.C + 
@@ -267,11 +266,22 @@ var DtxChart = (function(mod){
             if(pageInLastCanvas !== 0 && i === canvasCount - 1){
                 var widthFinalCanvas = DtxChartCanvasMargins.C + 
             (this._DTXDrawParameters.ChipHorizontalPositions.width + DtxChartCanvasMargins.F) * 
-            (pageInLastCanvas < MIN_PAGEPERCANVAS ? MIN_PAGEPERCANVAS : pageInLastCanvas) + //The width cannot be less than 4 page wide even though the last sheet may contain less than 4 pages  
+            (pageInLastCanvas < MIN_PAGEPERCANVAS ? MIN_PAGEPERCANVAS : pageInLastCanvas) + //The width cannot be less than 6 page wide even though the last sheet may contain less than 6 pages  
             DtxChartCanvasMargins.D;
+
+                if(this._barAligned)
+                {
+                    //Find the max page height required for last sheet
+                    var currCanvasPageList = this._pageList.slice( i*this._pagePerCanvas, this._pageList.length );
+                    var maxPageHeightForCurrSheet = currCanvasPageList.reduce(function(prevItem, currItem){
+                        return currItem.BAPageHeight >= prevItem.BAPageHeight ? currItem : prevItem;
+                    }).BAPageHeight;
+
+                    heightPerCanvas = maxPageHeightForCurrSheet + DtxChartCanvasMargins.A + DtxChartCanvasMargins.B + DtxChartCanvasMargins.E + DtxChartCanvasMargins.G * 2;
+                }
                 canvasConfigArray.push({
                     "pages": pageInLastCanvas,
-                    "pageHeight": this._pageHeight,
+                    //"pageHeight": this._pageHeight,
                     "width": widthFinalCanvas,
                     "height": heightPerCanvas,
                     "backgroundColor": DtxFillColor.Background,
@@ -279,9 +289,20 @@ var DtxChart = (function(mod){
                 });
             }
             else{
+
+                if(this._barAligned)
+                {   //Find the max page height required for each sheet
+                    var currCanvasPageList = this._pageList.slice( i*this._pagePerCanvas, (i+1)*this._pagePerCanvas );
+                    var maxPageHeightForCurrSheet = currCanvasPageList.reduce(function(prevItem, currItem){
+                        return currItem.BAPageHeight >= prevItem.BAPageHeight ? currItem : prevItem;
+                    }).BAPageHeight;
+
+                    heightPerCanvas = maxPageHeightForCurrSheet + DtxChartCanvasMargins.A + DtxChartCanvasMargins.B + DtxChartCanvasMargins.E + DtxChartCanvasMargins.G * 2;
+                }
+
                 canvasConfigArray.push({
                     "pages": this._pagePerCanvas,
-                    "pageHeight": this._pageHeight,
+                    //"pageHeight": this._pageHeight,
                     "width": widthPerCanvas,
                     "height": heightPerCanvas,
                     "backgroundColor": DtxFillColor.Background,
@@ -305,7 +326,8 @@ var DtxChart = (function(mod){
         //First page always starts with bar 0
         pageList.push({
             "startBarIndex" : 0,
-            "endBarIndex": null
+            "endBarIndex": null,
+            "BAPageHeight": 0
         });
 
         for(var i=0; i < barGroups.length; ++i ){
@@ -320,8 +342,9 @@ var DtxChart = (function(mod){
                 currAccumulatedHeight += pixelHeightOfCurrentBar;
             }
             else{
-                //
+                //The current page has reached its max height so fill this data
                 pageList[pageList.length - 1]["endBarIndex"] = i - 1;
+                pageList[pageList.length - 1]["BAPageHeight"] = currAccumulatedHeight;
 
                 //This bar will start on next page
                 pageList.push({
@@ -335,6 +358,8 @@ var DtxChart = (function(mod){
         }
 
         pageList[pageList.length - 1]["endBarIndex"] = barGroups.length - 1;
+        //Last page takes the height of 2nd last page
+        pageList[pageList.length - 1]["BAPageHeight"] = pageList[pageList.length - 2]["BAPageHeight"];//currAccumulatedHeight
 
         return pageList;
 
@@ -462,10 +487,11 @@ var DtxChart = (function(mod){
                     var pageAbsIndex = sheetIndex*this._pagePerCanvas + j;
 
                     //Draw End bar line for the last bar within each page
-                    var endPageBarLineAbsPos = pageAbsIndex === this._pageList.length - 1 ? this._positionMapper.chartLength() : this._positionMapper.barGroups[this._pageList[pageAbsIndex+1].startBarIndex].absStartPos; 
-                    var startPageBarLineAbsPos = this._positionMapper.barGroups[this._pageList[pageAbsIndex].startBarIndex].absStartPos;
+                    //var endPageBarLineAbsPos = pageAbsIndex === this._pageList.length - 1 ? this._positionMapper.chartLength() : this._positionMapper.barGroups[this._pageList[pageAbsIndex+1].startBarIndex].absStartPos; 
+                    //var startPageBarLineAbsPos = this._positionMapper.barGroups[this._pageList[pageAbsIndex].startBarIndex].absStartPos;
 
-                    var endPageBarLineRelPixHeight = (endPageBarLineAbsPos - startPageBarLineAbsPos)*this._scale;
+                    //var endPageBarLineRelPixHeight = (endPageBarLineAbsPos - startPageBarLineAbsPos)*this._scale;
+                    var endPageBarLineRelPixHeight = this._pageList[pageAbsIndex].BAPageHeight*this._scale;
                     var currPageHeight = endPageBarLineRelPixHeight;
                 }
                 else{
@@ -850,9 +876,9 @@ var DtxChart = (function(mod){
             var sheetIndex = Math.floor( pageIndex / this._pagePerCanvas );
             var sheetPageIndex = pageIndex % this._pagePerCanvas;
             var relativeYPixPos = relativeAbsPos * this._scale; 
-
+            var currSheetHeight = this._chartSheets[sheetIndex].canvasWidthHeightPages().height;
             //Calculate X,Y position of line's leftmost point
-            var actualPixHeightPosofLine = this._heightPerCanvas - DtxChartCanvasMargins.E - DtxChartCanvasMargins.G - relativeYPixPos;
+            var actualPixHeightPosofLine = currSheetHeight - DtxChartCanvasMargins.E - DtxChartCanvasMargins.G - relativeYPixPos;
             var actualPixWidthPosofLine = DtxChartCanvasMargins.C + 
             ( this._DTXDrawParameters.ChipHorizontalPositions.width + DtxChartCanvasMargins.F ) * sheetPageIndex;
 
@@ -874,9 +900,9 @@ var DtxChart = (function(mod){
             var sheetIndex = Math.floor( pageIndex / this._pagePerCanvas );
             var sheetPageIndex = pageIndex % this._pagePerCanvas;
             var remainingRelativePos = (absolutePositon * this._scale) % this._pageHeight;
-            
+            var currSheetHeight = this._chartSheets[sheetIndex].canvasWidthHeightPages().height;
             //Calculate X,Y position of line's leftmost point
-            var actualPixHeightPosofLine = this._heightPerCanvas - DtxChartCanvasMargins.E - DtxChartCanvasMargins.G - remainingRelativePos;
+            var actualPixHeightPosofLine = currSheetHeight - DtxChartCanvasMargins.E - DtxChartCanvasMargins.G - remainingRelativePos;
             var actualPixWidthPosofLine = DtxChartCanvasMargins.C + 
             ( this._DTXDrawParameters.ChipHorizontalPositions.width + DtxChartCanvasMargins.F ) * sheetPageIndex;
 
