@@ -38,7 +38,7 @@ var DtxChart = (function(mod){
         "D": 3,//Right margin of chart
         "E": 30,//Bottom margin of page
         "F": 0,//Right margin of each page (Except the last page for each canvas)
-        "G": 14,//Top/Bottom margin of Last/First line from the top/bottom border of each page
+        "G": 10,//Top/Bottom margin of Last/First line from the top/bottom border of each page
         "H": 2, //Bottom Margin height of Sheet Number text from the bottom edge of canvas
     };
 
