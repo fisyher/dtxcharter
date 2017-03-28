@@ -491,7 +491,7 @@ var DtxChart = (function(mod){
                     //var startPageBarLineAbsPos = this._positionMapper.barGroups[this._pageList[pageAbsIndex].startBarIndex].absStartPos;
 
                     //var endPageBarLineRelPixHeight = (endPageBarLineAbsPos - startPageBarLineAbsPos)*this._scale;
-                    var endPageBarLineRelPixHeight = this._pageList[pageAbsIndex].BAPageHeight*this._scale;
+                    var endPageBarLineRelPixHeight = this._pageList[pageAbsIndex].BAPageHeight;
                     var currPageHeight = endPageBarLineRelPixHeight;
                 }
                 else{
