@@ -88,14 +88,15 @@ $(document).ready(function(){
 		if(f){
 			var r = new FileReader();
 			r.onload = function(e) { 
-				var contents = e.target.result;				
-
+				var contents = e.target.result;
+				var arrayString = f.name.split(".");
+				var extension = arrayString[arrayString.length - 1];			
 				//Parse contents and create dtx-object from it
 				//var dtx_parser = new DtxParser();
 				//var status = dtx_parser.parseDtxText(contents);
 
 				//
-				var dtxparserv2 = new DtxChart.Parser();
+				var dtxparserv2 = new DtxChart.Parser({mode: extension.toLowerCase()});
 				var ret = dtxparserv2.parseDtxText(contents);
 				if(ret){
 					dtxdataObject = dtxparserv2.getDtxDataObject();

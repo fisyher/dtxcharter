@@ -393,13 +393,13 @@ var DtxChart = (function(mod){
         //iterate through barGroups
         var barGroups = this._dtxdata.barGroups;
         var chartInfo = this._dtxdata.chartInfo;
-        var metadata = this._dtxdata.metadata;
+        var metadata = this._dtxdata.metadata.drum;
         var positionMapper = this._positionMapper;
 
         
 
         //Draw ChartInfo
-        this.drawChartInfo(chartInfo, metadata.totalNoteCount);
+        this.drawChartInfo(chartInfo, metadata ? metadata.totalNoteCount : 0);
 
         //Draw frames
         this.drawPageFrames();
@@ -606,7 +606,7 @@ var DtxChart = (function(mod){
         var songSeconds = Math.round(songLength%60).toFixed(0);
         songSeconds = songSeconds < 10 ? "0" + songSeconds : "" + songSeconds;//Convert to string with fixed 2 characters
 
-        var diffLevel = this._chartType === "Vmix" ? Math.floor(chartInfo.level*10).toFixed(0) : chartInfo.level + "";
+        var diffLevel = this._chartType === "Vmix" ? Math.floor(chartInfo.drumlevel*10).toFixed(0) : chartInfo.drumlevel + "";
         
         var otherInfo = "LV:" + diffLevel + "  BPM:" + chartInfo.bpm + "  Length:" + songMinutes + ":" + songSeconds +"  Total Notes:" + totalNoteCount;
 
