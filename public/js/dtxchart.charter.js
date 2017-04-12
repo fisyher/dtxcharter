@@ -226,8 +226,6 @@ var DtxChart = (function(mod){
         }
     };
 
-    
-
     /**
      * Method: DtxChart.Charter.canvasRequired
      * Parameters: None
@@ -239,7 +237,7 @@ var DtxChart = (function(mod){
             width - Canvas width
             height - Canvas height
             backgroundColor - Default is black
-            elementId - The suggested elementID which takes the form of "dtxchart_0", "dtxchart_1", "dtxchart_2"... 
+            elementId - The suggested elementID which takes the form of "dtxdrumchart_0", "dtxdrumchart_1", "dtxdrumchart_2"... 
      */
     Charter.prototype.canvasRequired = function(){
         //Calculate the canvas required, including the width height of each canvas and number of pages per canvas
@@ -285,7 +283,7 @@ var DtxChart = (function(mod){
                     "width": widthFinalCanvas,
                     "height": heightPerCanvas,
                     "backgroundColor": DtxFillColor.Background,
-                    "elementId": "dtxchart_" + i
+                    "elementId": "dtxdrumchart_" + i
                 });
             }
             else{
@@ -306,7 +304,7 @@ var DtxChart = (function(mod){
                     "width": widthPerCanvas,
                     "height": heightPerCanvas,
                     "backgroundColor": DtxFillColor.Background,
-                    "elementId": "dtxchart_" + i
+                    "elementId": "dtxdrumchart_" + i
                 });
             }
         }

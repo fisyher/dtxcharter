@@ -19,21 +19,22 @@ $(document).ready(function(){
 	var dtxdataObject = null;
 	var lineMapper = null;
 	var graph = null;
+	var availableCharts = {
+            drum: false,
+            guitar: false,
+            bass: false
+        };
 	var canRedraw = false;
 
 	//
-	function createCanvasSheets(canvasConfigArray){
+	function createDrumCanvasSheets(canvasConfigArray){
 		for(var i in canvasConfigArray){
-			var index = parseInt(i);
-			if(index === 0)
-			{
-				$("#chart_container").append('<div class="row"><div class="col-md-12 col-sm-12 col-xs-12 canvasSheetContainer"><canvas id="'+ canvasConfigArray[i].elementId +'"></canvas><canvas id="dtxgraph"></canvas></div></div>');
-			}
-			else{
-				$("#chart_container").append('<div class="row"><div class="col-md-12 col-sm-12 col-xs-12 canvasSheetContainer"><canvas id="'+ canvasConfigArray[i].elementId +'"></canvas></div></div>');
-			}
-			
+			$("#drum_chart_container").append('<div class="row"><div class="col-md-12 col-sm-12 col-xs-12 canvasSheetContainer"><canvas id="'+ canvasConfigArray[i].elementId +'"></canvas></div></div>');
 		}
+	}
+
+	function createGraphPage(){
+		$("#graph_container").append('<div class="row"><div class="col-md-12 col-sm-12 col-xs-12 canvasSheetContainer"><canvas id="dtxgraph"></canvas></div></div>')
 	}
 
 	// create a wrapper around native canvas element (with id="c1")
@@ -52,8 +53,10 @@ $(document).ready(function(){
 
 		//Add DOM manipulation code
 		charter2.clearDTXChart();		
-		$("#chart_container").empty();
-
+		$("#drum_chart_container").empty();
+		$("#guitar_chart_container").empty();
+		$("#bass_chart_container").empty();
+		$("#graph_container").empty();
 		//
 		charter2.setConfig({
 			scale: parseFloat( $('#SelectScaleFactor').val() ),
@@ -67,24 +70,50 @@ $(document).ready(function(){
 		var canvasConfigArray = charter2.canvasRequired();
 		//console.log("Required canvas count: ",canvasConfigArray.length);
 		//
-		createCanvasSheets(canvasConfigArray);	
-
+		createDrumCanvasSheets(canvasConfigArray);	
+		createGraphPage();
+		
 		charter2.setCanvasArray(canvasConfigArray);
 		charter2.drawDTXChart();	
 		//Draw graph last
 		graph = new DtxChart.Graph(dtxdataObject, "dtxgraph");
 		graph.drawGraph();
+
+		//'Click' on first non-home tabs
+		var hLink = "home";
+		if(availableCharts.drum){
+			hLink = "menu1";				
+		}
+		else if(availableCharts.guitar){
+			hLink = "menu2";					
+		}
+		else if(availableCharts.bass){
+			hLink = "menu3";
+		}
+		$('.nav-tabs a[href="#' + hLink + '"]').tab('show');//Programmatically clicks on the selected tab
 	});
 
 	$('#Clear').click(function(e){
 		
 		charter2.clearDTXChart();
 		canRedraw = false;
+		availableCharts  = {
+            drum: false,
+            guitar: false,
+            bass: false
+        };
 
 		//Add DOM manipulation code
 		$('#openFile').val('');
-		$("#chart_container").empty();
-		$('#placeholder').css('display', '');
+		$("#drum_chart_container").empty();
+		$("#guitar_chart_container").empty();
+		$("#bass_chart_container").empty();
+		$("#graph_container").empty();
+		$('#placeholder1').css('display', '');
+		$('#placeholder2').css('display', '');
+		$('#placeholder3').css('display', '');
+		$('#placeholder4').css('display', '');
+		$('.nav-tabs a[href="#home"]').tab('show');
 	});
 
 	$('#openFile').change(function(e){
@@ -120,17 +149,19 @@ $(document).ready(function(){
 						chartType: $('#SelectMode').val(),
 						barAligned : true//Test
 					});
-
 					
 					//
 					var canvasConfigArray = charter2.canvasRequired();
 					console.log("Required canvas count: ",canvasConfigArray.length);
 					
-					//Clear chart before loading
-					$('#placeholder').css('display', 'none');					
-					$("#chart_container").empty();
+					//Clear chart before loading										
+					$("#drum_chart_container").empty();
+					$("#guitar_chart_container").empty();
+					$("#bass_chart_container").empty();
+					$("#graph_container").empty();
 					//
-					createCanvasSheets(canvasConfigArray);
+					createDrumCanvasSheets(canvasConfigArray);
+					createGraphPage();
 
 					//canvasConfigArray[0].backgroundColor = "#000000";					
 					charter2.setCanvasArray(canvasConfigArray);
@@ -139,6 +170,41 @@ $(document).ready(function(){
 					//Draw graph last
 					graph = new DtxChart.Graph(dtxdataObject, "dtxgraph");
 					graph.drawGraph();
+
+					//Hide placeholders of available charts only
+					availableCharts = dtxparserv2.availableCharts();
+					if(availableCharts.drum){
+						$('#placeholder1').css('display', 'none');					
+					}
+					else{
+						$('#placeholder1').css('display', '');
+					}
+					if(availableCharts.guitar){
+						$('#placeholder2').css('display', 'none');					
+					}
+					else{
+						$('#placeholder2').css('display', '');	
+					}
+					if(availableCharts.bass){
+						$('#placeholder3').css('display', 'none');
+					}
+					else{
+						$('#placeholder3').css('display', '');
+					}
+					$('#placeholder4').css('display', 'none');
+
+					//'Click' on first non-home tabs
+					var hLink = "home";
+					if(availableCharts.drum){
+						hLink = "menu1";				
+					}
+					else if(availableCharts.guitar){
+						hLink = "menu2";					
+					}
+					else if(availableCharts.bass){
+						hLink = "menu3";
+					}
+					$('.nav-tabs a[href="#' + hLink + '"]').tab('show');//Programmatically clicks on the selected tab
 					canRedraw = true;
 				}				
 			}

@@ -127,6 +127,26 @@ var DtxChart = (function(mod){
         var dtxDataObject = this._dtxdata;
         return dtxDataObject;
     };
+
+     /*
+    Method: DtxChart.Parser.availableCharts
+    Parameters:
+    None
+    Description:
+    Use this method to query available types of charts the loaded dtx has. Check based on levels.
+    All charts with notes must be given a non-zero levels.
+    Returns:
+    The availableCharts result object
+    */
+    //May include extended object methods in future
+    Parser.prototype.availableCharts = function(){
+        var ret = {
+            drum: this._dtxdata.chartInfo.drumlevel > 0.00 ? true : false,
+            guitar: this._dtxdata.chartInfo.guitarlevel > 0.00 ? true : false,
+            bass: this._dtxdata.chartInfo.basslevel > 0.00 ? true : false
+        };
+        return ret;
+    };
     
     //Internal methods are denoted with a first character underscore
 
