@@ -19,6 +19,7 @@ $(document).ready(function(){
 	var dtxdataObject = null;
 	var lineMapper = null;
 	var graph = null;
+	var canRedraw = false;
 
 	//
 	function createCanvasSheets(canvasConfigArray){
@@ -45,6 +46,10 @@ $(document).ready(function(){
 	var charter2 = new DtxChart.Charter();
 	
 	$('#Draw').click(function(e){
+		if(!canRedraw){
+			return;
+		}
+
 		//Add DOM manipulation code
 		charter2.clearDTXChart();		
 		$("#chart_container").empty();
@@ -74,6 +79,7 @@ $(document).ready(function(){
 	$('#Clear').click(function(e){
 		
 		charter2.clearDTXChart();
+		canRedraw = false;
 
 		//Add DOM manipulation code
 		$('#openFile').val('');
@@ -133,6 +139,7 @@ $(document).ready(function(){
 					//Draw graph last
 					graph = new DtxChart.Graph(dtxdataObject, "dtxgraph");
 					graph.drawGraph();
+					canRedraw = true;
 				}				
 			}
 			r.readAsText(f,encoding);
