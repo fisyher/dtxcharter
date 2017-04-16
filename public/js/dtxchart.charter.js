@@ -4,9 +4,9 @@
 
 var DtxChart = (function(mod){
 
-    var CanvasEngine = mod.CanvasEngine;//Can be FabricJS, EaselJS or even raw Canvas API
-    if(!CanvasEngine){
-        console.error("CanvasEngine not loaded into DtxChart module! DtxChart.Charter will not render without a Canvas engine");
+    var ChartSheet = mod.ChartSheet;
+    if(!ChartSheet){
+        console.error("ChartSheet not loaded into DtxChart module! DtxChart.Charter depends on DtxChart.ChartSheet");
     }
 
     var Parser = mod.Parser;//Parser needs to be loaded first
@@ -186,12 +186,12 @@ var DtxChart = (function(mod){
         this._barAligned = config.barAligned === undefined ? false : config.barAligned;
         if(this._barAligned)
         {
-            this._pageList = this.computeBarAlignedPositions();
-            console.log(this._pageList);
+            this._pageList = this._computeBarAlignedPositions();
+            //console.log(this._pageList);
         }
 
         this._chartType = config.chartType? config.chartType : "full";//full, Gitadora, Vmix
-        this.createDrawParameters(this._chartType);
+        this._createDrawParameters(this._chartType);
     }
 
     Charter.prototype.clearDTXChart = function(){
@@ -210,12 +210,12 @@ var DtxChart = (function(mod){
         this._pageList = null;
     };
 
-    Charter.prototype.createDrawParameters = function(chartType){
+    Charter.prototype._createDrawParameters = function(chartType){
         //Currently works for proper charts but when drawing mismatch chart, chips in lanes ignored are never drawn
-        this._DTXDrawParameters.ChipHorizontalPositions = computeChipHorizontalPositions(chartType);
+        this._DTXDrawParameters.ChipHorizontalPositions = _computeChipHorizontalPositions(chartType);
 
         //Widths
-        this._DTXDrawParameters.chipWidthHeight = computeChipWidthHeight(chartType);
+        this._DTXDrawParameters.chipWidthHeight = _computeChipWidthHeight(chartType);
 
         //Color
         this._DTXDrawParameters.chipColors = {};
@@ -312,7 +312,7 @@ var DtxChart = (function(mod){
         return canvasConfigArray;
     };
 
-    Charter.prototype.computeBarAlignedPositions = function(){
+    Charter.prototype._computeBarAlignedPositions = function(){
         //
         var pageList = [];
         var barGroups = this._positionMapper.barGroups;
@@ -913,79 +913,6 @@ var DtxChart = (function(mod){
     };
 
     /**
-     * Parameters:
-     * canvasConfig is an object with following information:
-     *    pages - Number of pages in this canvas
-     *    width - The full width of canvas
-     *    height - The full height of canvas
-     *    elementId - The id of the html5 canvas element
-     *    backgroundColor - Color string of background color of canvas
-     */
-    function ChartSheet(canvasConfig){
-        
-        this._canvasConfig = canvasConfig;
-        if(CanvasEngine){
-            this._canvasObject = CanvasEngine.createCanvas(canvasConfig);//The actual canvasObject
-        }
-
-    }
-
-    /**
-     * 
-     */
-    ChartSheet.prototype.canvasWidthHeightPages = function(){
-        return {
-            width: this._canvasConfig.width,
-            height: this._canvasConfig.height,
-            pages: this._canvasConfig.pages
-        };
-    };
-
-    /**
-     * positionSize - An object defined as {x: <number>, y: <number>, width: <number>, height: <number>}
-     * drawOptions - Drawing options consisting of following options:
-     *      fill - Fill Color code in string
-     *      stroke - Stroke Color, Default is black
-     *      strokeWidth - The width of stroke in pixels. Default is 0
-     * Remarks: Origin of rect is assumed to be top-left corner by default, unless otherwise 
-     */
-    ChartSheet.prototype.addRectangle = function(positionSize, drawOptions){
-        if(CanvasEngine){
-            CanvasEngine.addRectangle.call(this, positionSize, drawOptions);
-        }
-    };
-
-    ChartSheet.prototype.addChip = function(positionSize, drawOptions){
-        if(CanvasEngine){
-            CanvasEngine.addChip.call(this, positionSize, drawOptions);
-        }
-    };
-
-    ChartSheet.prototype.addLine = function(positionSize, drawOptions){
-        if(CanvasEngine){
-            CanvasEngine.addLine.call(this, positionSize, drawOptions);
-        }
-    };
-
-    ChartSheet.prototype.addText = function(positionSize, text, textOptions){
-        if(CanvasEngine){
-            CanvasEngine.addText.call(this, positionSize, text, textOptions);
-        }
-    };
-
-    ChartSheet.prototype.clear = function(){
-        if(CanvasEngine){
-            CanvasEngine.clear.call(this);
-        }
-    };
-
-    ChartSheet.prototype.update = function(){
-        if(CanvasEngine){
-            CanvasEngine.update.call(this);
-        }
-    };
-
-    /**
      * Helper functions
      */
     function limit(input, min, max){
@@ -1001,7 +928,7 @@ var DtxChart = (function(mod){
             
     }
 
-    function computeChipHorizontalPositions(chartType){
+    function _computeChipHorizontalPositions(chartType){
         var ChipHorizontalPositions = {
             "BarNum":5,
             "LeftBorder":47
@@ -1048,7 +975,7 @@ var DtxChart = (function(mod){
         return ChipHorizontalPositions;
     }
 
-    function computeChipWidthHeight(chartType){
+    function _computeChipWidthHeight(chartType){
         var chipWidthHeight = {};
         for(var prop in DtxChipWidthHeight){
             if(DtxChipWidthHeight.hasOwnProperty(prop)){
