@@ -147,7 +147,8 @@ $(document).ready(function(){
 						pageHeight: parseInt( $('#SelectPageHeight').val() ),
 						pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
 						chartType: $('#SelectMode').val(),
-						barAligned : true//Test
+						barAligned : true,//Test
+						direction: "up"//up or down
 					});
 					
 					//
