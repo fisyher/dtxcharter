@@ -63,7 +63,10 @@ $(document).ready(function(){
 			pageHeight: parseInt( $('#SelectPageHeight').val() ),
 			pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
 			chartType: $('#SelectMode').val(),
-			barAligned : true//Test
+			barAligned : true,//Test
+			direction: "up",//up or down
+			drawParameters: DtxChart.DMDrawMethods.createDrawParameters( $('#SelectMode').val() ),
+			drawNoteFunction: DtxChart.DMDrawMethods.drawNote
 		});
 
 		//
@@ -148,7 +151,9 @@ $(document).ready(function(){
 						pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
 						chartType: $('#SelectMode').val(),
 						barAligned : true,//Test
-						direction: "up"//up or down
+						direction: "up",//up or down
+						drawParameters: DtxChart.DMDrawMethods.createDrawParameters( $('#SelectMode').val() ),
+						drawNoteFunction: DtxChart.DMDrawMethods.drawNote
 					});
 					
 					//

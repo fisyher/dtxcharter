@@ -28,8 +28,6 @@ var DtxChart = (function(mod){
 
     var BEAT_LINE_GAP = 48;//192/4
 
-    var DEFAULT_LANE_BORDER = 2;
-
     //A collection of width/height constants for positioning purposes. Refer to diagram for details 
     var DtxChartCanvasMargins = {
         "A": 58,//Info section height
@@ -40,67 +38,7 @@ var DtxChart = (function(mod){
         "F": 0,//Right margin of each page (Except the last page for each canvas)
         "G": 12,//Top/Bottom margin of Last/First line from the top/bottom border of each page
         "H": 2, //Bottom Margin height of Sheet Number text from the bottom edge of canvas
-    };
-
-    //Width and Height of chips are standard
-    var DEFAULT_CHIP_HEIGHT = 4;
-	var DEFAULT_CHIP_WIDTH = 17;
-
-    //Put in a map and reference this map instead in case need to change
-    var DtxChipWidthHeight = {
-        "LC":{width: DEFAULT_CHIP_WIDTH+4, height: DEFAULT_CHIP_HEIGHT},
-		"HH":{width: DEFAULT_CHIP_WIDTH, height: DEFAULT_CHIP_HEIGHT},
-        "LB":{width: DEFAULT_CHIP_WIDTH+2, height: DEFAULT_CHIP_HEIGHT},
-		"LP":{width: DEFAULT_CHIP_WIDTH+2, height: DEFAULT_CHIP_HEIGHT},
-		"SD":{width: DEFAULT_CHIP_WIDTH, height: DEFAULT_CHIP_HEIGHT},
-		"HT":{width: DEFAULT_CHIP_WIDTH, height: DEFAULT_CHIP_HEIGHT},
-		"BD":{width: DEFAULT_CHIP_WIDTH+2, height: DEFAULT_CHIP_HEIGHT},
-		"LT":{width: DEFAULT_CHIP_WIDTH, height: DEFAULT_CHIP_HEIGHT},
-		"FT":{width: DEFAULT_CHIP_WIDTH, height: DEFAULT_CHIP_HEIGHT},
-		"RC":{width: DEFAULT_CHIP_WIDTH+4, height: DEFAULT_CHIP_HEIGHT},
-		"RD":{width: DEFAULT_CHIP_WIDTH, height: DEFAULT_CHIP_HEIGHT},
-    };
-
-    /*
-    var DtxChartPageMarkerHorizontalPositions = { 
-        "Bpm":260, 
-        "LeftBorder":47, 
-        "LC":50, 
-        "HH":70, 
-        "LB":90,//LB and LP are used in the same lane but different colors 
-        "LP":90, 
-        "SD":110, 
-        "HT":130, 
-        "BD":150, 
-        "LT":170, 
-        "FT":190,
-        "RC":210, 
-        "RD":230, 
-        "RightBorder": 249, 
-        "BarNum":18, 
-        "width": 300 
-        };
-     */
-
-    var DtxChipLaneOrder = {
-        "full": ["LC","HH","LP","SD","HT","BD","LT","FT","RC","RD"],//LP and LB are in the same position
-        "Gitadora": ["LC","HH","LP","SD","HT","BD","LT","FT","RC"],
-        "Vmix": ["HH","SD","BD","HT","LT","RC"]
-    }; 
-
-    var DtxChipColor = {
-        "LC":"#ff4ca1",
-		"HH":"#00ffff",
-        "LB":"#e7baff",
-		"LP":"#ffd3f0",
-		"SD":"#fff040",
-		"HT":"#00ff00",
-		"BD":"#e7baff",
-		"LT":"#ff0000",
-		"FT":"#fea101",
-		"RC":"#00ccff",
-		"RD":"#5a9cf9",
-    };
+    };    
 
     var DtxFillColor = {
         "Background": "#ffffff",
@@ -133,9 +71,6 @@ var DtxChart = (function(mod){
         "ChartInfo": 24,
         "PageNumber": 18
     };
-
-    // var DtxMaxTitleWidth = (DtxChartPageMarkerHorizontalPositions.width + DtxChartCanvasMargins.F)*4 + DtxChartCanvasMargins.C;//Max span 4 pages long
-    // var DtxMaxArtistWidth = DtxMaxTitleWidth;
 
     /** 
      * Constructor of Charter
@@ -178,6 +113,8 @@ var DtxChart = (function(mod){
      *   chartType {String}: Type of chart to draw. Valid options are "full", "Gitadora", "Vmix". Defaults to "full"
      *   barAligned (bool): true if all pages are drawn with only full bars in it.
      *   direction (String): Direction in which bar numbers are increasing. Valid options are "up" (DM style) and "down" (GF style). Defaults to "up"
+     *   drawParameters (Object): DrawParameters object
+     *   drawNoteFunction (function): Draw Note function that takes in 4 arguments: laneLabel, chartSheet, pixSheetPos, drawParameters
      */
     Charter.prototype.setConfig = function(config){
         //
@@ -195,7 +132,8 @@ var DtxChart = (function(mod){
         this._direction = config.direction === undefined ? "up" : config.direction;
 
         this._chartType = config.chartType? config.chartType : "full";//full, Gitadora, Vmix
-        this._createDrawParameters(this._chartType);
+        this._DTXDrawParameters = config.drawParameters;//config.createDrawParameters(this._chartType);
+        this._drawNoteFunction = config.drawNoteFunction;
     }
 
     Charter.prototype.clearDTXChart = function(){
@@ -213,22 +151,6 @@ var DtxChart = (function(mod){
 
         this._pageList = null;
         this._direction = "up";
-    };
-
-    Charter.prototype._createDrawParameters = function(chartType){
-        //Currently works for proper charts but when drawing mismatch chart, chips in lanes ignored are never drawn
-        this._DTXDrawParameters.ChipHorizontalPositions = _computeChipHorizontalPositions(chartType);
-
-        //Widths
-        this._DTXDrawParameters.chipWidthHeight = _computeChipWidthHeight(chartType);
-
-        //Color
-        this._DTXDrawParameters.chipColors = {};
-        for(var prop in DtxChipColor){
-            if(DtxChipColor.hasOwnProperty(prop)){
-                this._DTXDrawParameters.chipColors[prop] = DtxChipColor[prop];
-            }
-        }
     };
 
     /**
@@ -855,13 +777,9 @@ var DtxChart = (function(mod){
                 console.log("Sheet unavailable! Unable to draw");
                 continue;
             }
-            chartSheet.addChip({x: chipPixXpos, 
-                                y: pixSheetPos.posY,
-                                width: this._DTXDrawParameters.chipWidthHeight[laneLabel].width,
-                                height: this._DTXDrawParameters.chipWidthHeight[laneLabel].height
-                            }, {
-                                fill: this._DTXDrawParameters.chipColors[laneLabel]
-                            });
+
+            //laneLabel, chartsheet, pixSheetPos, drawParameters
+            this._drawNoteFunction(laneLabel, chartSheet, pixSheetPos, this._DTXDrawParameters);
         }
 
     };
@@ -967,93 +885,8 @@ var DtxChart = (function(mod){
         }
         else{
             return input;
-        }
-            
-    }
-
-    function _computeChipHorizontalPositions(chartType){
-        var ChipHorizontalPositions = {
-            "BarNum":5,
-            "LeftBorder":47
-        };
-
-        var innerChartType = chartType;
-        if(DtxChipLaneOrder[chartType] === undefined)
-        {
-            innerChartType = "full";
-        }
-
-        var currXpos = 50;
-        for(var i=0; i < DtxChipLaneOrder[innerChartType].length; ++i ){
-            var lane = DtxChipLaneOrder[innerChartType][i];
-            var chipWidth = DtxChipWidthHeight[lane].width;
-            ChipHorizontalPositions[lane] = currXpos;
-            currXpos += chipWidth + DEFAULT_LANE_BORDER;
-        }
-
-        ChipHorizontalPositions["RightBorder"] = currXpos;
-        ChipHorizontalPositions["Bpm"] = currXpos + 8;
-        ChipHorizontalPositions["width"] = currXpos + 8 + 48;
-
-        //"full", "Gitadora", "Vmix"
-        //Do following mapping based on ChartType
-        if(innerChartType === "full")
-        {
-            ChipHorizontalPositions["LB"] = ChipHorizontalPositions["LP"];
-        }
-        else if(innerChartType === "Gitadora")
-        {
-            ChipHorizontalPositions["RD"] = ChipHorizontalPositions["RC"];//RD notes will appear at RC lane for Gitadora mode
-            ChipHorizontalPositions["LB"] = ChipHorizontalPositions["LP"];
-        }
-        else if(innerChartType === "Vmix")
-        {
-            ChipHorizontalPositions["LC"] = ChipHorizontalPositions["HH"];
-            ChipHorizontalPositions["LP"] = ChipHorizontalPositions["HH"];
-            ChipHorizontalPositions["FT"] = ChipHorizontalPositions["LT"];
-            ChipHorizontalPositions["RD"] = ChipHorizontalPositions["RC"];
-            ChipHorizontalPositions["LB"] = ChipHorizontalPositions["BD"];
-        }
-
-        return ChipHorizontalPositions;
-    }
-
-    function _computeChipWidthHeight(chartType){
-        var chipWidthHeight = {};
-        for(var prop in DtxChipWidthHeight){
-            if(DtxChipWidthHeight.hasOwnProperty(prop)){
-                chipWidthHeight[prop] = DtxChipWidthHeight[prop];
-            }
-        }
-
-        var innerChartType = chartType;
-        if(DtxChipLaneOrder[chartType] === undefined)
-        {
-            innerChartType = "full";
-        }
-
-        //"full", "Gitadora", "Vmix"
-        //Do following mapping based on ChartType
-        if(innerChartType === "full")
-        {
-            chipWidthHeight["LB"] = chipWidthHeight["LP"];
-        }
-        else if(innerChartType === "Gitadora")
-        {
-            chipWidthHeight["LB"] = chipWidthHeight["LP"];
-            chipWidthHeight["RD"] = chipWidthHeight["RC"];//RD notes will appear at RC lane for Gitadora mode
-        }
-        else if(innerChartType === "Vmix")
-        {
-            chipWidthHeight["LC"] = chipWidthHeight["HH"];
-            chipWidthHeight["LP"] = chipWidthHeight["HH"];
-            chipWidthHeight["FT"] = chipWidthHeight["LT"];
-            chipWidthHeight["RD"] = chipWidthHeight["RC"];
-            chipWidthHeight["LB"] = chipWidthHeight["BD"];
-        }
-
-        return chipWidthHeight;
-    }
+        }            
+    }    
 
     mod.Charter = Charter;
     return mod;

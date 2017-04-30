@@ -56,9 +56,9 @@ var DtxChart = (function(mod){
         }
     };
 
-    ChartSheet.prototype.addChip = function(positionSize, drawOptions){
+    ChartSheet.prototype.addChip = function(positionSize, drawOptions, imgObject){
         if(CanvasEngine){
-            CanvasEngine.addChip.call(this, positionSize, drawOptions);
+            CanvasEngine.addChip.call(this, positionSize, drawOptions, imgObject);
         }
     };
 
