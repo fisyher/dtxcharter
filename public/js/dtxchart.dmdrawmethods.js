@@ -25,7 +25,7 @@ var DtxChart = (function(mod){
     //Width and Height of chips are standard
     var DEFAULT_CHIP_HEIGHT = 5;
 	var DEFAULT_CHIP_WIDTH = 18;
-    var DEFAULT_LANE_BORDER = 2;
+    var DEFAULT_LANE_BORDER = 1;
 
     //Put in a map and reference this map instead in case need to change
     var DtxChipWidthHeight = {
@@ -79,6 +79,9 @@ var DtxChart = (function(mod){
         }
         //Image if available
         drawParameters.imageSet = drumsChipImageSet;
+
+        //
+        drawParameters.elementIDPrefix = "dtxdrums";
         return drawParameters;
     };
 

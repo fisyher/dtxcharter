@@ -90,6 +90,7 @@ var DtxChart = (function(mod){
         //this._heightPerCanvas = 0;
         this._barAligned = false;
         this._chartType = "full";
+        this._mode = null;
         this._DTXDrawParameters = {};
         this._direction = "up";
     }
@@ -111,6 +112,7 @@ var DtxChart = (function(mod){
      *   pageHeight (Number): The height for each page in pixels. Min is 960 pixel, Max is 3840, Default is 1920 pixel
      *   pagePerCanvas (Number): The number of pages to be rendered per canvas element. Min 4 pages and max 20
      *   chartType {String}: Type of chart to draw. Valid options are "full", "Gitadora", "Vmix". Defaults to "full"
+     *   mode {String}: "drum", "bass", "guitar"
      *   barAligned (bool): true if all pages are drawn with only full bars in it.
      *   direction (String): Direction in which bar numbers are increasing. Valid options are "up" (DM style) and "down" (GF style). Defaults to "up"
      *   drawParameters (Object): DrawParameters object
@@ -132,6 +134,7 @@ var DtxChart = (function(mod){
         this._direction = config.direction === undefined ? "up" : config.direction;
 
         this._chartType = config.chartType? config.chartType : "full";//full, Gitadora, Vmix
+        this._mode = config.mode;//
         this._DTXDrawParameters = config.drawParameters;//config.createDrawParameters(this._chartType);
         this._drawNoteFunction = config.drawNoteFunction;
     }
@@ -147,6 +150,7 @@ var DtxChart = (function(mod){
         //this._heightPerCanvas = 0;
         this._barAligned = false;
         this._chartType = "full";
+        this._mode = null;
         this._DTXDrawParameters = {};
 
         this._pageList = null;
@@ -210,7 +214,7 @@ var DtxChart = (function(mod){
                     "width": widthFinalCanvas,
                     "height": heightPerCanvas,
                     "backgroundColor": DtxFillColor.Background,
-                    "elementId": "dtxdrumchart_" + i
+                    "elementId": this._DTXDrawParameters.elementIDPrefix + "_" + i
                 });
             }
             else{
@@ -231,7 +235,7 @@ var DtxChart = (function(mod){
                     "width": widthPerCanvas,
                     "height": heightPerCanvas,
                     "backgroundColor": DtxFillColor.Background,
-                    "elementId": "dtxdrumchart_" + i
+                    "elementId": this._DTXDrawParameters.elementIDPrefix + "_" + i
                 });
             }
         }
@@ -318,10 +322,8 @@ var DtxChart = (function(mod){
         //iterate through barGroups
         var barGroups = this._dtxdata.barGroups;
         var chartInfo = this._dtxdata.chartInfo;
-        var metadata = this._dtxdata.metadata.drum;
+        var metadata = this._dtxdata.metadata[this._mode];
         var positionMapper = this._positionMapper;
-
-        
 
         //Draw ChartInfo
         this.drawChartInfo(chartInfo, metadata ? metadata.totalNoteCount : 0);
@@ -349,6 +351,7 @@ var DtxChart = (function(mod){
 
             //Draw chips
             for(var laneLabel in barInfo["notes"]){
+                //Make use of utility functions in Parser to decode the line                
                 if(this._DTXDrawParameters.ChipHorizontalPositions.hasOwnProperty(laneLabel)){
                     //Make use of utility functions in Parser to decode the line
                     var chipPosArray = Parser.utils.decodeBarLine( barInfo["notes"][laneLabel], lineCount );
@@ -543,12 +546,15 @@ var DtxChart = (function(mod){
         var songSeconds = Math.round(songLength%60).toFixed(0);
         songSeconds = songSeconds < 10 ? "0" + songSeconds : "" + songSeconds;//Convert to string with fixed 2 characters
 
-        var diffLevel = this._chartType === "Vmix" ? Math.floor(chartInfo.drumlevel*10).toFixed(0) : chartInfo.drumlevel + "";
+        var diffLevel = this._chartType === "Vmix" ? Math.floor(chartInfo[this._mode + "level"]*10).toFixed(0) : chartInfo[this._mode + "level"] + "";
         
-        var otherInfo = "LV:" + diffLevel + "  BPM:" + chartInfo.bpm + "  Length:" + songMinutes + ":" + songSeconds +"  Total Notes:" + totalNoteCount;
+        var modeInfo = this._mode.toUpperCase();
+        var otherInfoUpperLine = modeInfo + " Level: " + diffLevel + "  BPM: " + chartInfo.bpm;
+        var otherInfoLowerLine = "Length: " + songMinutes + ":" + songSeconds +"  Total Notes: " + totalNoteCount;
+        //var otherInfo = modeInfo + " Level:" + diffLevel + "  BPM:" + chartInfo.bpm + "  Length:" + songMinutes + ":" + songSeconds +"  Total Notes:" + totalNoteCount;
 
         var otherInfoPosX = DtxChartCanvasMargins.C + 
-        ( this._DTXDrawParameters.ChipHorizontalPositions.width + DtxChartCanvasMargins.F ) * MIN_PAGEPERCANVAS;//Information appears at 4 page wide
+        ( this._DTXDrawParameters.ChipHorizontalPositions.width + DtxChartCanvasMargins.F ) * (MIN_PAGEPERCANVAS);//Information appears at 4 page wide
 
         var DtxMaxTitleWidth = (this._DTXDrawParameters.ChipHorizontalPositions.width + DtxChartCanvasMargins.F)*3.8 + DtxChartCanvasMargins.C;//Max span 4 pages long
         var DtxMaxArtistWidth = DtxMaxTitleWidth;
@@ -573,7 +579,7 @@ var DtxChart = (function(mod){
 
             this._chartSheets[i].addText({
                                 x: DtxChartCanvasMargins.C + 2,
-                                y: DtxChartCanvasMargins.A - 18, //A is the Line divider, The Title text will be above the Artist text
+                                y: DtxChartCanvasMargins.A - 19, //A is the Line divider, The Title text will be above the Artist text
                                 width: DtxMaxTitleWidth
                                 }, chartInfo.title, {
                                 fill: DtxTextColor.ChartInfo,
@@ -595,14 +601,27 @@ var DtxChart = (function(mod){
                             });
             }
             
+            //Mode information
+            this._chartSheets[i].addText({
+                                x: otherInfoPosX,
+                                y: DtxChartCanvasMargins.A - 19, //A is the Line divider, The Info text will be slightly above it
+                                width: DtxMaxOtherInfoWidth
+                                }, otherInfoUpperLine, {
+                                fill: DtxTextColor.ChartInfo,
+                                fontSize: DtxFontSizes.ChartInfo,
+                                fontFamily: "Arial",
+                                originY: "bottom",
+                                originX: "right"
+                            });
 
+            //Other Information Text
             this._chartSheets[i].addText({
                                 x: otherInfoPosX,
                                 y: DtxChartCanvasMargins.A, //A is the Line divider, The Info text will be slightly above it
                                 width: DtxMaxOtherInfoWidth
-                                }, otherInfo, {
+                                }, otherInfoLowerLine, {
                                 fill: DtxTextColor.ChartInfo,
-                                fontSize: DtxFontSizes.ChartInfo,
+                                fontSize: DtxFontSizes.Artist,
                                 fontFamily: "Arial",
                                 originY: "bottom",
                                 originX: "right"
@@ -738,7 +757,7 @@ var DtxChart = (function(mod){
                                     stroke: lineColor,
 		                            strokeWidth: 1,
                                 });
-            } else{
+            } else {
                 chartSheet.addLine({x: pixSheetPos.posX + this._DTXDrawParameters.ChipHorizontalPositions.LeftBorder,
                                 y: pixSheetPos.posY,
                                 width: lineWidth,
@@ -769,7 +788,7 @@ var DtxChart = (function(mod){
             var pixSheetPos = this.getPixelPositionOfLine(absLinePos);
 
             //Compute the final x position for this specific chip given the laneLabel
-            var chipPixXpos =  pixSheetPos.posX + this._DTXDrawParameters.ChipHorizontalPositions[laneLabel];
+            //var chipPixXpos =  pixSheetPos.posX + this._DTXDrawParameters.ChipHorizontalPositions[laneLabel];
 
             //Finally select the correct sheet to draw the chip
             var chartSheet = this._chartSheets[pixSheetPos.sheetIndex];

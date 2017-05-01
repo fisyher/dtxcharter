@@ -27,9 +27,9 @@ $(document).ready(function(){
 	var canRedraw = false;
 
 	//
-	function createDrumCanvasSheets(canvasConfigArray){
+	function createCanvasSheets(canvasConfigArray, elementSelector){
 		for(var i in canvasConfigArray){
-			$("#drum_chart_container").append('<div class="row"><div class="col-md-12 col-sm-12 col-xs-12 canvasSheetContainer"><canvas id="'+ canvasConfigArray[i].elementId +'"></canvas></div></div>');
+			$(elementSelector).append('<div class="row"><div class="col-md-12 col-sm-12 col-xs-12 canvasSheetContainer"><canvas id="'+ canvasConfigArray[i].elementId +'"></canvas></div></div>');
 		}
 	}
 
@@ -44,7 +44,9 @@ $(document).ready(function(){
 	
 	//var plotter = new Xcharter.Plotter();
 	//
-	var charter2 = new DtxChart.Charter();
+	var dmcharter = new DtxChart.Charter();
+	var gfgcharter = new DtxChart.Charter();
+	var gfbcharter = new DtxChart.Charter();
 	
 	$('#Draw').click(function(e){
 		if(!canRedraw){
@@ -52,32 +54,66 @@ $(document).ready(function(){
 		}
 
 		//Add DOM manipulation code
-		charter2.clearDTXChart();		
+		dmcharter.clearDTXChart();
+		gfgcharter.clearDTXChart();
+		gfbcharter.clearDTXChart();		
 		$("#drum_chart_container").empty();
 		$("#guitar_chart_container").empty();
 		$("#bass_chart_container").empty();
 		$("#graph_container").empty();
 		//
-		charter2.setConfig({
+		dmcharter.setConfig({
 			scale: parseFloat( $('#SelectScaleFactor').val() ),
 			pageHeight: parseInt( $('#SelectPageHeight').val() ),
 			pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
 			chartType: $('#SelectMode').val(),
+			mode: "drum",
 			barAligned : true,//Test
 			direction: "up",//up or down
 			drawParameters: DtxChart.DMDrawMethods.createDrawParameters( $('#SelectMode').val() ),
 			drawNoteFunction: DtxChart.DMDrawMethods.drawNote
 		});
+		gfgcharter.setConfig({
+			scale: parseFloat( $('#SelectScaleFactor').val() ),
+			pageHeight: parseInt( $('#SelectPageHeight').val() ),
+			pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
+			chartType: $('#SelectMode').val(),
+			mode: "guitar",
+			barAligned : true,//Test
+			direction: "down",//up or down
+			drawParameters: DtxChart.GFDrawMethods.createDrawParameters( $('#SelectMode').val(), 'G' ),
+			drawNoteFunction: DtxChart.GFDrawMethods.drawNote
+		});
+		gfbcharter.setConfig({
+			scale: parseFloat( $('#SelectScaleFactor').val() ),
+			pageHeight: parseInt( $('#SelectPageHeight').val() ),
+			pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
+			chartType: $('#SelectMode').val(),
+			mode: "bass",
+			barAligned : true,//Test
+			direction: "down",//up or down
+			drawParameters: DtxChart.GFDrawMethods.createDrawParameters( $('#SelectMode').val(), 'B' ),
+			drawNoteFunction: DtxChart.GFDrawMethods.drawNote
+		});
 
 		//
-		var canvasConfigArray = charter2.canvasRequired();
+		var dmcanvasConfigArray = dmcharter.canvasRequired();
+		var gfgcanvasConfigArray = gfgcharter.canvasRequired();
+		var gfbcanvasConfigArray = gfbcharter.canvasRequired();
 		//console.log("Required canvas count: ",canvasConfigArray.length);
 		//
-		createDrumCanvasSheets(canvasConfigArray);	
+		createCanvasSheets(dmcanvasConfigArray, "#drum_chart_container");
+		createCanvasSheets(gfgcanvasConfigArray, "#guitar_chart_container");
+		createCanvasSheets(gfbcanvasConfigArray, "#bass_chart_container");
 		createGraphPage();
 		
-		charter2.setCanvasArray(canvasConfigArray);
-		charter2.drawDTXChart();	
+		dmcharter.setCanvasArray(dmcanvasConfigArray);
+		dmcharter.drawDTXChart();
+		gfgcharter.setCanvasArray(gfgcanvasConfigArray);
+		gfgcharter.drawDTXChart();
+		gfbcharter.setCanvasArray(gfbcanvasConfigArray);
+		gfbcharter.drawDTXChart();
+			
 		//Draw graph last
 		graph = new DtxChart.Graph(dtxdataObject, "dtxgraph");
 		graph.drawGraph();
@@ -98,7 +134,7 @@ $(document).ready(function(){
 
 	$('#Clear').click(function(e){
 		
-		charter2.clearDTXChart();
+		dmcharter.clearDTXChart();
 		canRedraw = false;
 		availableCharts  = {
             drum: false,
@@ -138,27 +174,62 @@ $(document).ready(function(){
 				var ret = dtxparserv2.parseDtxText(contents);
 				if(ret){
 					dtxdataObject = dtxparserv2.getDtxDataObject();
-					console.log(dtxdataObject);
-					console.log(JSON.stringify(dtxdataObject));
+					//console.log(dtxdataObject);
+					//console.log(JSON.stringify(dtxdataObject));
 
 					lineMapper = new DtxChart.LinePositionMapper(dtxdataObject);
 					var estimatedDuration = lineMapper.estimateSongDuration();
 					console.log("Song is estimated to be " + estimatedDuration + " seconds long");
-					charter2.setDtxData(dtxdataObject, lineMapper);//
-					charter2.setConfig({
+					dmcharter.setDtxData(dtxdataObject, lineMapper);//
+					dmcharter.setConfig({
 						scale: parseFloat( $('#SelectScaleFactor').val() ),
 						pageHeight: parseInt( $('#SelectPageHeight').val() ),
 						pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
 						chartType: $('#SelectMode').val(),
+						mode: "drum",
 						barAligned : true,//Test
 						direction: "up",//up or down
 						drawParameters: DtxChart.DMDrawMethods.createDrawParameters( $('#SelectMode').val() ),
 						drawNoteFunction: DtxChart.DMDrawMethods.drawNote
 					});
+
+					/*
+					var gfgcharter = new DtxChart.Charter();
+					var gfbcharter = new DtxChart.Charter();
+					*/
+
+					gfgcharter.setDtxData(dtxdataObject, lineMapper);//
+					gfgcharter.setConfig({
+						scale: parseFloat( $('#SelectScaleFactor').val() ),
+						pageHeight: parseInt( $('#SelectPageHeight').val() ),
+						pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
+						chartType: $('#SelectMode').val(),
+						mode: "guitar",
+						barAligned : true,//Test
+						direction: "down",//up or down
+						drawParameters: DtxChart.GFDrawMethods.createDrawParameters( $('#SelectMode').val(), "G" ),
+						drawNoteFunction: DtxChart.GFDrawMethods.drawNote
+					});
+
+					gfbcharter.setDtxData(dtxdataObject, lineMapper);//
+					gfbcharter.setConfig({
+						scale: parseFloat( $('#SelectScaleFactor').val() ),
+						pageHeight: parseInt( $('#SelectPageHeight').val() ),
+						pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
+						chartType: $('#SelectMode').val(),
+						mode: "bass",
+						barAligned : true,//Test
+						direction: "down",//up or down
+						drawParameters: DtxChart.GFDrawMethods.createDrawParameters( $('#SelectMode').val(), "B" ),
+						drawNoteFunction: DtxChart.GFDrawMethods.drawNote
+					});
 					
 					//
-					var canvasConfigArray = charter2.canvasRequired();
-					console.log("Required canvas count: ",canvasConfigArray.length);
+					var dmcanvasConfigArray = dmcharter.canvasRequired();
+					console.log("Required canvas count: ",dmcanvasConfigArray.length);
+
+					var gfgcanvasConfigArray = gfgcharter.canvasRequired();
+					var gfbcanvasConfigArray = gfbcharter.canvasRequired();
 					
 					//Clear chart before loading										
 					$("#drum_chart_container").empty();
@@ -166,12 +237,18 @@ $(document).ready(function(){
 					$("#bass_chart_container").empty();
 					$("#graph_container").empty();
 					//
-					createDrumCanvasSheets(canvasConfigArray);
+					createCanvasSheets(dmcanvasConfigArray, "#drum_chart_container");
+					createCanvasSheets(gfgcanvasConfigArray, "#guitar_chart_container");
+					createCanvasSheets(gfbcanvasConfigArray, "#bass_chart_container");
 					createGraphPage();
 
 					//canvasConfigArray[0].backgroundColor = "#000000";					
-					charter2.setCanvasArray(canvasConfigArray);
-					charter2.drawDTXChart();
+					dmcharter.setCanvasArray(dmcanvasConfigArray);
+					dmcharter.drawDTXChart();
+					gfgcharter.setCanvasArray(gfgcanvasConfigArray);
+					gfgcharter.drawDTXChart();
+					gfbcharter.setCanvasArray(gfbcanvasConfigArray);
+					gfbcharter.drawDTXChart();
 					
 					//Draw graph last
 					graph = new DtxChart.Graph(dtxdataObject, "dtxgraph");
