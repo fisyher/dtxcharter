@@ -18,7 +18,9 @@ $(document).ready(function(){
 	var currDtxObject = null;
 	var dtxdataObject = null;
 	var lineMapper = null;
-	var graph = null;
+	var graphDrum = null;
+	var graphGuitar = null;
+	var graphBass = null;
 	var availableCharts = {
             drum: false,
             guitar: false,
@@ -29,12 +31,50 @@ $(document).ready(function(){
 	//
 	function createCanvasSheets(canvasConfigArray, elementSelector){
 		for(var i in canvasConfigArray){
-			$(elementSelector).append('<div class="row"><div class="col-md-12 col-sm-12 col-xs-12 canvasSheetContainer"><canvas id="'+ canvasConfigArray[i].elementId +'"></canvas></div></div>');
+			$(elementSelector).append('<canvas class="invis" id="'+ canvasConfigArray[i].elementId +'"></canvas>');
+		}
+	}
+
+	function createImgElementsFromCanvas(canvasConfigArray, elementSelector){
+		for(var i in canvasConfigArray){
+			var currCanvas = document.getElementById(canvasConfigArray[i].elementId);
+			var dataUrl = currCanvas.toDataURL();
+			var imgElement = $('<img id="img_'+ canvasConfigArray[i].elementId +'">');
+			
+			var zoomFactor = 0.2;
+			imgElement.attr('src', dataUrl);
+			imgElement.addClass('zoomable');
+
+			//Initialize each image as zoomed-out
+			//jquery style does not work
+			imgElement.addClass('out');
+			imgElement[0].onload = function(){
+				console.log(this.width + ", " + this.height);
+				this.height = window.innerHeight - 104;
+			};
+			//End zoomed-out
+
+			imgElement.click(function(){
+				var currImg = $(this);
+				currImg.toggleClass('out');				
+				if(currImg.hasClass('out')){
+					//Zoomed-out
+					currImg.height( window.innerHeight - 104);
+				}
+				else{
+					//Zoomed-in
+					currImg.height( currImg[0].naturalHeight);
+				}
+			});
+			$(elementSelector).append(imgElement);
 		}
 	}
 
 	function createGraphPage(){
-		$("#graph_container").append('<div class="row"><div class="col-md-12 col-sm-12 col-xs-12 canvasSheetContainer"><canvas id="dtxgraph"></canvas></div></div>')
+		$("#graph_container").append('<div class="row"><div class="col-md-2 col-sm-2 col-xs-2 canvasSheetContainer" id="dtxgraphdiv"></div><div class="col-md-2 col-sm-2 col-xs-2 canvasSheetContainer" id="guitargraphdiv"></div><div class="col-md-2 col-sm-2 col-xs-2 canvasSheetContainer" id="bassgraphdiv"></div></div>')
+		$("#dtxgraphdiv").append('<h1>Drums</h1><canvas class="graphs" id="dtxgraph"></canvas>');
+		$("#guitargraphdiv").append('<h1>Guitar</h1><canvas class="graphs" id="guitargraph"></canvas>');
+		$("#bassgraphdiv").append('<h1>Bass</h1><canvas class="graphs" id="bassgraph"></canvas>');
 	}
 
 	// create a wrapper around native canvas element (with id="c1")
@@ -59,8 +99,7 @@ $(document).ready(function(){
 		gfbcharter.clearDTXChart();		
 		$("#drum_chart_container").empty();
 		$("#guitar_chart_container").empty();
-		$("#bass_chart_container").empty();
-		$("#graph_container").empty();
+		$("#bass_chart_container").empty();		
 		//
 		dmcharter.setConfig({
 			scale: parseFloat( $('#SelectScaleFactor').val() ),
@@ -68,6 +107,7 @@ $(document).ready(function(){
 			pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
 			chartType: $('#SelectMode').val(),
 			mode: "drum",
+			difficultyTier: $('#SelectDifficulty').val(),
 			barAligned : true,//Test
 			direction: "up",//up or down
 			drawParameters: DtxChart.DMDrawMethods.createDrawParameters( $('#SelectMode').val() ),
@@ -79,6 +119,7 @@ $(document).ready(function(){
 			pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
 			chartType: $('#SelectMode').val(),
 			mode: "guitar",
+			difficultyTier: $('#SelectDifficulty').val(),
 			barAligned : true,//Test
 			direction: "down",//up or down
 			drawParameters: DtxChart.GFDrawMethods.createDrawParameters( $('#SelectMode').val(), 'G' ),
@@ -90,6 +131,7 @@ $(document).ready(function(){
 			pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
 			chartType: $('#SelectMode').val(),
 			mode: "bass",
+			difficultyTier: $('#SelectDifficulty').val(),
 			barAligned : true,//Test
 			direction: "down",//up or down
 			drawParameters: DtxChart.GFDrawMethods.createDrawParameters( $('#SelectMode').val(), 'B' ),
@@ -105,7 +147,7 @@ $(document).ready(function(){
 		createCanvasSheets(dmcanvasConfigArray, "#drum_chart_container");
 		createCanvasSheets(gfgcanvasConfigArray, "#guitar_chart_container");
 		createCanvasSheets(gfbcanvasConfigArray, "#bass_chart_container");
-		createGraphPage();
+		//createGraphPage();
 		
 		dmcharter.setCanvasArray(dmcanvasConfigArray);
 		dmcharter.drawDTXChart();
@@ -113,11 +155,12 @@ $(document).ready(function(){
 		gfgcharter.drawDTXChart();
 		gfbcharter.setCanvasArray(gfbcanvasConfigArray);
 		gfbcharter.drawDTXChart();
-			
-		//Draw graph last
-		graph = new DtxChart.Graph(dtxdataObject, "dtxgraph");
-		graph.drawGraph();
 
+		//
+		createImgElementsFromCanvas(dmcanvasConfigArray, "#drum_chart_container");
+		createImgElementsFromCanvas(gfgcanvasConfigArray, "#guitar_chart_container");
+		createImgElementsFromCanvas(gfbcanvasConfigArray, "#bass_chart_container");
+		
 		//'Click' on first non-home tabs
 		var hLink = "home";
 		if(availableCharts.drum){
@@ -187,6 +230,7 @@ $(document).ready(function(){
 						pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
 						chartType: $('#SelectMode').val(),
 						mode: "drum",
+						difficultyTier: $('#SelectDifficulty').val(),
 						barAligned : true,//Test
 						direction: "up",//up or down
 						drawParameters: DtxChart.DMDrawMethods.createDrawParameters( $('#SelectMode').val() ),
@@ -205,6 +249,7 @@ $(document).ready(function(){
 						pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
 						chartType: $('#SelectMode').val(),
 						mode: "guitar",
+						difficultyTier: $('#SelectDifficulty').val(),
 						barAligned : true,//Test
 						direction: "down",//up or down
 						drawParameters: DtxChart.GFDrawMethods.createDrawParameters( $('#SelectMode').val(), "G" ),
@@ -218,6 +263,7 @@ $(document).ready(function(){
 						pagePerCanvas: parseInt( $('#SelectPagePerCanvas').val()),
 						chartType: $('#SelectMode').val(),
 						mode: "bass",
+						difficultyTier: $('#SelectDifficulty').val(),
 						barAligned : true,//Test
 						direction: "down",//up or down
 						drawParameters: DtxChart.GFDrawMethods.createDrawParameters( $('#SelectMode').val(), "B" ),
@@ -250,26 +296,36 @@ $(document).ready(function(){
 					gfbcharter.setCanvasArray(gfbcanvasConfigArray);
 					gfbcharter.drawDTXChart();
 					
-					//Draw graph last
-					graph = new DtxChart.Graph(dtxdataObject, "dtxgraph");
-					graph.drawGraph();
-
+					//
+					createImgElementsFromCanvas(dmcanvasConfigArray, "#drum_chart_container");
+					createImgElementsFromCanvas(gfgcanvasConfigArray, "#guitar_chart_container");
+					createImgElementsFromCanvas(gfbcanvasConfigArray, "#bass_chart_container");
+					
 					//Hide placeholders of available charts only
 					availableCharts = dtxparserv2.availableCharts();
+					//Drum
 					if(availableCharts.drum){
-						$('#placeholder1').css('display', 'none');					
+						$('#placeholder1').css('display', 'none');
+						graphDrum = new DtxChart.Graph(dtxdataObject, "dtxgraph");
+						graphDrum.drawGraph();					
 					}
 					else{
 						$('#placeholder1').css('display', '');
 					}
+					//Guitar
 					if(availableCharts.guitar){
-						$('#placeholder2').css('display', 'none');					
+						$('#placeholder2').css('display', 'none');
+						graphGuitar = new DtxChart.Graph(dtxdataObject, "guitargraph", null, "Guitar");
+						graphGuitar.drawGraph();					
 					}
 					else{
 						$('#placeholder2').css('display', '');	
 					}
+					//Bass
 					if(availableCharts.bass){
 						$('#placeholder3').css('display', 'none');
+						graphBass = new DtxChart.Graph(dtxdataObject, "bassgraph", null, "Bass");
+						graphBass.drawGraph();
 					}
 					else{
 						$('#placeholder3').css('display', '');

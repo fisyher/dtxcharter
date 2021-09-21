@@ -70,7 +70,8 @@ var DtxChart = (function(mod){
 
     function addRectangle(positionSize, drawOptions){
         var rect = new fabric.Rect({
-			  fill: drawOptions.fill,
+              fill: drawOptions.fill,
+              opacity: drawOptions.opacity,
               originY: drawOptions.originY,
 			  width: positionSize.width,
 			  height: positionSize.height,
@@ -144,9 +145,14 @@ var DtxChart = (function(mod){
 
     function loadChipImageAssets(url, laneLabel){
         var self = this;
-        fabric.util.loadImage(url, function (img) {            
-            self[laneLabel] = img;           
+        var promise = new Promise(function(resolve, reject){
+            fabric.util.loadImage(url, function (img) {            
+                self[laneLabel] = img;
+                console.log(img);
+                resolve(true);           
+            });
         });
+        return promise;
     }
    //
     mod.CanvasEngine = {

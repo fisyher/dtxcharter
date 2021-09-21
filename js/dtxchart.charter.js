@@ -24,7 +24,7 @@ var DtxChart = (function(mod){
 
     var DEFAULT_PAGEPERCANVAS = 20;
     var MIN_PAGEPERCANVAS = 6;
-    var MAX_PAGEPERCANVAS = 25;
+    var MAX_PAGEPERCANVAS = 110;
 
     var BEAT_LINE_GAP = 48;//192/4
 
@@ -32,19 +32,22 @@ var DtxChart = (function(mod){
     var DtxChartCanvasMargins = {
         "A": 58,//Info section height
         "B": 2,//Top margin of page//31
-        "C": 3,//Left margin of chart
-        "D": 3,//Right margin of chart
-        "E": 30,//Bottom margin of page
+        "C": 3,//Left margin of each canvas
+        "D": 3,//Right margin of each canvas
+        "E": 40,//Bottom margin of page
         "F": 0,//Right margin of each page (Except the last page for each canvas)
         "G": 12,//Top/Bottom margin of Last/First line from the top/bottom border of each page
         "H": 2, //Bottom Margin height of Sheet Number text from the bottom edge of canvas
+        "I": 150, //Title and Artist X-offset from left
     };    
 
     var DtxFillColor = {
-        "Background": "#ffffff",
+        "Background": "#000000",
         "ChartInfo":"#221e1a",
         "PageFill": "#221e1a"
     };
+
+    //Difficulty Mode Color: "#a900ff" "#ed1c24" "#beaf02" "#5297ff"
 
     var DtxBarLineColor = {
         "BarLine": "#707070",
@@ -57,10 +60,10 @@ var DtxChart = (function(mod){
     };
 
     var DtxTextColor = {
-        "BarNumber": "#000000",
+        "BarNumber": "#ffffff",
         "BpmMarker": "#ffffff",
         "ChartInfo": "#ffffff",
-        "PageNumber": "#000000"
+        "PageNumber": "#ffffff"
     };   
 
     var DtxFontSizes = {
@@ -91,6 +94,7 @@ var DtxChart = (function(mod){
         this._barAligned = false;
         this._chartType = "full";
         this._mode = null;
+        this._difficultyTier = null;
         this._DTXDrawParameters = {};
         this._direction = "up";
     }
@@ -135,6 +139,7 @@ var DtxChart = (function(mod){
 
         this._chartType = config.chartType? config.chartType : "full";//full, Gitadora, Vmix
         this._mode = config.mode;//
+        this._difficultyTier = config.difficultyTier;
         this._DTXDrawParameters = config.drawParameters;//config.createDrawParameters(this._chartType);
         this._drawNoteFunction = config.drawNoteFunction;
     }
@@ -151,6 +156,7 @@ var DtxChart = (function(mod){
         this._barAligned = false;
         this._chartType = "full";
         this._mode = null;
+        this._difficultyTier = null;
         this._DTXDrawParameters = {};
 
         this._pageList = null;
@@ -251,7 +257,7 @@ var DtxChart = (function(mod){
         var currPage = 0;
         var currAccumulatedHeight = 0;
         var pageHeightLimit = this._pageHeight;
-
+        var maxAccumulatedHeight = 0;
         //First page always starts with bar 0
         pageList.push({
             "startBarIndex" : 0,
@@ -275,6 +281,11 @@ var DtxChart = (function(mod){
                 pageList[pageList.length - 1]["endBarIndex"] = i - 1;
                 pageList[pageList.length - 1]["BAPageHeight"] = currAccumulatedHeight;
 
+                //Find the max height of all pages at the end of this loop
+                if(currAccumulatedHeight >  maxAccumulatedHeight){
+                    maxAccumulatedHeight = currAccumulatedHeight;
+                }
+
                 //This bar will start on next page
                 pageList.push({
                     "startBarIndex" : i
@@ -287,11 +298,20 @@ var DtxChart = (function(mod){
         }
 
         pageList[pageList.length - 1]["endBarIndex"] = barGroups.length - 1;
-        //Last page takes the height of 2nd last page
-        pageList[pageList.length - 1]["BAPageHeight"] = pageList[pageList.length - 2]["BAPageHeight"];//currAccumulatedHeight
+        //Last page takes the largest height value of all previous pages
+        pageList[pageList.length - 1]["BAPageHeight"] = maxAccumulatedHeight;
 
         return pageList;
 
+    };
+
+    Charter.prototype.imageSetReadyPromise = function(){
+        if(this._DTXDrawParameters.imageSet_promises){
+            return Promise.all(this._DTXDrawParameters.imageSet_promises);
+        }
+        else{
+            return Promise.resolve(false);
+        }
     };
 
     /**
@@ -359,6 +379,14 @@ var DtxChart = (function(mod){
                 }
             }
 
+        }        
+
+        //Draw Hold Notes (Guitar and Bass only)
+        if(this._mode === "guitar"){
+            this.drawHoldNotes(this._dtxdata.gHoldNotes);
+        }
+        else if(this._mode === "bass"){
+            this.drawHoldNotes(this._dtxdata.bHoldNotes);
         }
 
         //Draw the start and end line
@@ -548,8 +576,7 @@ var DtxChart = (function(mod){
 
         var diffLevel = this._chartType === "Vmix" ? Math.floor(chartInfo[this._mode + "level"]*10).toFixed(0) : chartInfo[this._mode + "level"] + "";
         
-        var modeInfo = this._mode.toUpperCase();
-        var otherInfoUpperLine = modeInfo + " Level: " + diffLevel + "  BPM: " + chartInfo.bpm;
+        var otherInfoUpperLine = " Level: " + diffLevel + "  BPM: " + chartInfo.bpm;
         var otherInfoLowerLine = "Length: " + songMinutes + ":" + songSeconds +"  Total Notes: " + totalNoteCount;
         //var otherInfo = modeInfo + " Level:" + diffLevel + "  BPM:" + chartInfo.bpm + "  Length:" + songMinutes + ":" + songSeconds +"  Total Notes:" + totalNoteCount;
 
@@ -559,6 +586,9 @@ var DtxChart = (function(mod){
         var DtxMaxTitleWidth = (this._DTXDrawParameters.ChipHorizontalPositions.width + DtxChartCanvasMargins.F)*3.8 + DtxChartCanvasMargins.C;//Max span 4 pages long
         var DtxMaxArtistWidth = DtxMaxTitleWidth;
         var DtxMaxOtherInfoWidth = (this._DTXDrawParameters.ChipHorizontalPositions.width + DtxChartCanvasMargins.F)*2 + DtxChartCanvasMargins.D;
+
+        /**ChartType and Difficulty Tier Decal */
+        var decalName = this._mode + this._difficultyTier;
 
         //Repeat for every sheet available
         for(var i in this._chartSheets){
@@ -578,25 +608,25 @@ var DtxChart = (function(mod){
                                     });
 
             this._chartSheets[i].addText({
-                                x: DtxChartCanvasMargins.C + 2,
+                                x: DtxChartCanvasMargins.C + DtxChartCanvasMargins.I,
                                 y: DtxChartCanvasMargins.A - 19, //A is the Line divider, The Title text will be above the Artist text
                                 width: DtxMaxTitleWidth
                                 }, chartInfo.title, {
                                 fill: DtxTextColor.ChartInfo,
                                 fontSize: DtxFontSizes.Title,
-                                fontFamily: "Arial",
+                                fontFamily: "Meiryo UI",
                                 originY: "bottom"
                             });
 
             if(chartInfo.artist && chartInfo.artist !== ""){
                 this._chartSheets[i].addText({
-                                x: DtxChartCanvasMargins.C + 2,
+                                x: DtxChartCanvasMargins.C + DtxChartCanvasMargins.I,
                                 y: DtxChartCanvasMargins.A, //A is the Line divider, The Artist text will be slightly below it
                                 width: DtxMaxArtistWidth
                                 }, chartInfo.artist, {
                                 fill: DtxTextColor.ChartInfo,
                                 fontSize: DtxFontSizes.Artist,
-                                fontFamily: "Arial",
+                                fontFamily: "Meiryo UI",
                                 originY: "bottom"
                             });
             }
@@ -635,6 +665,15 @@ var DtxChart = (function(mod){
                                     stroke: DtxBarLineColor.TitleLine,
 		                            strokeWidth: 2,
                                 });
+
+            //Draw Decal at top left corner                    
+            this._chartSheets[i].addChip({x: DtxChartCanvasMargins.C, 
+                                y: DtxChartCanvasMargins.A / 2.0, //Add Chip has OriginY at Center so have to set in center of Info Section
+                                width: 140, //Set to Actual image width
+                                height: 50  //Set to actual image height
+                            }, {
+                                fill: null
+                            }, this._DTXDrawParameters.imageSet[decalName]);                    
         }
     };
 
@@ -804,6 +843,181 @@ var DtxChart = (function(mod){
     };
 
     /**
+     * Method: drawHoldNotes
+     * Parameters:
+     * holdNotesInfoArray - An array of HoldNotesInfo {"startBarPos": {barIndex: <int>, pos: <int>}, "endBarPos": {barIndex: <int>, pos: <int>}, "buttonType": ""}
+     *  
+     */
+    Charter.prototype.drawHoldNotes = function(holdNotesInfoArray){
+
+        for (let index = 0; index < holdNotesInfoArray.length; index++) {
+            const holdNotesInfo = holdNotesInfoArray[index];
+            
+            //Get absolute pos for start and end position of Hold Note
+            var startAbsPos = this._positionMapper.absolutePositionOfLine(holdNotesInfo["startBarPos"]["barIndex"], holdNotesInfo["startBarPos"]["pos"]);
+            var endAbsPos = this._positionMapper.absolutePositionOfLine(holdNotesInfo["endBarPos"]["barIndex"], holdNotesInfo["endBarPos"]["pos"]);
+
+            //Get pixelSheetPos for each of start and end for current canvas setting
+            var startPixSheetPos = this.getPixelPositionOfLine(startAbsPos);
+            var endPixSheetPos = this.getPixelPositionOfLine(endAbsPos);
+
+            //Draw from start pos to end pos
+            //VIOLA
+            //NO. Not that simple. Hold Notes move across time, which is draw out vertically on canvas, thus it is possible to cross multiple columns and even canvas sheet!
+
+            //Base on start and end PixSheetPos, calculate how many vertical segments to be drawn
+            var currHoldNoteVerticalSegments = this._computeVerticalSegmentsForHoldNote(startPixSheetPos, endPixSheetPos);
+
+            //To do the actual drawing given the verticalsegments info and buttonType
+            //console.log("Hold note compute done");
+            this._drawHoldNoteVerticalSegments(currHoldNoteVerticalSegments, holdNotesInfo["buttonType"]);
+        }
+    }
+
+    Charter.prototype._drawHoldNoteVerticalSegments = function(currHoldNoteVerticalSegments, buttonType){
+        
+        //Get rectangle infos based on buttonType
+        let isOpen = true;
+        let currNoteFlagArray = [];
+        for (let i = 0; i < this._DTXDrawParameters.flagArray.length; i++) {
+            let flag = buttonType.charAt(i+1) === "1" ? 1 : 0;
+            if(flag === 1){
+                isOpen = false;
+            }
+            currNoteFlagArray.push(flag);                
+        }
+        
+        if(isOpen){
+            console.warn("Open should not have Hold notes!");
+        }
+        else{
+            //Iterate for all vertical segments
+            for (let index = 0; index < currHoldNoteVerticalSegments.length; index++) {
+                const currVertSegment = currHoldNoteVerticalSegments[index];
+                
+                let currSheetIndex = currVertSegment.startPixSheetPos.sheetIndex;          
+                if(this._direction === "up"){                
+                    var originYRect = "bottom";
+                } else if(this._direction === "down"){                
+                    var originYRect = "top";
+                }
+                
+                //Draw Rectangle only if button is pressed
+                for (let j = 0; j < currNoteFlagArray.length; j++) {
+                    const flag = currNoteFlagArray[j];
+                    const flagLabel = this._DTXDrawParameters.flagArray[j]; 
+                    if(flag === 1){
+                        //Draw the required rectangles
+                        let segPixPosX =  currVertSegment.startPixSheetPos.posX + this._DTXDrawParameters.ChipHorizontalPositions[flagLabel];
+                        let segWidth = this._DTXDrawParameters.chipWidthHeight[flagLabel].width;
+                        this._chartSheets[currSheetIndex].addRectangle({x: segPixPosX,
+                            y: currVertSegment.startPixSheetPos.posY,
+                            width: segWidth,//
+                            height: Math.abs( currVertSegment.endPixSheetPos.posY - currVertSegment.startPixSheetPos.posY )
+                            }, {
+                                fill: this._DTXDrawParameters.chipColors[flagLabel],
+                                originY: originYRect,
+                                opacity: 0.5
+                            });
+                    }
+                }    
+            }
+        }
+    }
+
+    /**
+     * Method: _computeVerticalSegmentsForHoldNote (internal method)
+     * Parameters:
+     * startPixSheetPosition - The start position of hold note
+     * endPixSheetPosition -  The end position of hold note
+     * Returns: An array of start and end pixsheet positions for vertical segments
+     */
+    Charter.prototype._computeVerticalSegmentsForHoldNote = function(startPixSheetPosition, endPixSheetPosition){
+
+        //Get absolute PageIndex for both start and end positions
+        var startPageAbsIndex = startPixSheetPosition.sheetIndex * this._pagePerCanvas + startPixSheetPosition.sheetPageIndex;
+        var endPageAbsIndex = endPixSheetPosition.sheetIndex * this._pagePerCanvas + endPixSheetPosition.sheetPageIndex;
+
+        var numVerticalSegments = endPageAbsIndex - startPageAbsIndex + 1;
+        var retArray = [];
+        if(numVerticalSegments === 1){
+            //Easy, just return the array as it is                
+            retArray.push({
+                startPixSheetPos : JSON.parse( JSON.stringify(startPixSheetPosition) ),//Deep copy?
+                endPixSheetPos : JSON.parse( JSON.stringify(endPixSheetPosition) )
+            });            
+        }
+        else{
+
+            /**
+                 * Some Number patterns to consider: numVerticalSegments - 1 = pairs of intermediate positions
+                 * Thus, we can iterate by number of pairs of intermediate positions
+                 */
+            var currStartPixSheetPosition = JSON.parse( JSON.stringify(startPixSheetPosition) );
+            
+            for (let index = 0; index < numVerticalSegments - 1; index++) {
+                let currPageAbsIndex = startPageAbsIndex + index;
+                let currSheetIndex = Math.floor( currPageAbsIndex / this._pagePerCanvas );
+                let currSheetPageIndex = currPageAbsIndex % this._pagePerCanvas;
+                
+                if(this._direction === "up"){
+                    var startPoint = this._chartSheets[currSheetIndex].canvasWidthHeightPages().height;
+                    var edgeOffset = DtxChartCanvasMargins.E;
+                    var directionMultiplier = -1.0;                
+                } else if(this._direction === "down"){
+                    var startPoint = 0;
+                    var edgeOffset = DtxChartCanvasMargins.A + DtxChartCanvasMargins.B;
+                    var directionMultiplier = 1.0;
+                }
+
+                //Get end pos of current vertical segment
+                if(this._barAligned){
+                    var currPageHeight = this._pageList[currPageAbsIndex].BAPageHeight;
+                }
+                else{
+                    var currPageHeight = this._pageHeight;
+                }                    
+                let currVerticalEndPosY = startPoint + directionMultiplier * (edgeOffset + currPageHeight + DtxChartCanvasMargins.G);
+                let currVerticalEndPosX = currStartPixSheetPosition["posX"];
+
+                //Push into array
+                retArray.push({
+                    startPixSheetPos : currStartPixSheetPosition,
+                    endPixSheetPos : {
+                        sheetIndex: currSheetIndex,
+                        sheetPageIndex: currSheetPageIndex,
+                        posX: currVerticalEndPosX,
+                        posY: currVerticalEndPosY
+                    }
+                });
+
+                //Get start pos for NEXT vertical segment
+                let nextVerticalStartPosY = startPoint + directionMultiplier * (edgeOffset + DtxChartCanvasMargins.G);
+                let nextSheetIndex = Math.floor( (currPageAbsIndex + 1) / this._pagePerCanvas );
+                let nextSheetPageIndex = (currPageAbsIndex + 1) % this._pagePerCanvas; 
+                let nextVerticalStartPosX = DtxChartCanvasMargins.C + 
+                ( this._DTXDrawParameters.ChipHorizontalPositions.width + DtxChartCanvasMargins.F ) * nextSheetPageIndex;
+
+                currStartPixSheetPosition = {
+                    sheetIndex: nextSheetIndex,
+                    sheetPageIndex: nextSheetPageIndex,
+                    posX: nextVerticalStartPosX,
+                    posY: nextVerticalStartPosY
+                };
+                
+            }    
+            
+            //Wrap up the last segment with the final pix position
+            retArray.push({
+                startPixSheetPos : currStartPixSheetPosition,
+                endPixSheetPos : JSON.parse( JSON.stringify(endPixSheetPosition) )
+            });
+        }   
+        
+        return retArray;
+    }
+
+    /**
      * Method: getPixelPositionOfLine
      * Parameter:
      * absolutePositon - The absolute position of the a line
@@ -853,6 +1067,7 @@ var DtxChart = (function(mod){
 
             return {
                 sheetIndex: sheetIndex,
+                sheetPageIndex: sheetPageIndex,
                 posX: actualPixWidthPosofLine,
                 posY: actualPixHeightPosofLine
             };
@@ -886,6 +1101,7 @@ var DtxChart = (function(mod){
 
             return {
                 sheetIndex: sheetIndex,
+                sheetPageIndex: sheetPageIndex,
                 posX: actualPixWidthPosofLine,
                 posY: actualPixHeightPosofLine
             };

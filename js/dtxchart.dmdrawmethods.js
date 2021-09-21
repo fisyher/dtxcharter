@@ -9,18 +9,26 @@ var DtxChart = (function(mod){
         console.error("CanvasEngine not loaded into DtxChart module! DtxChart.Charter will not render without a Canvas engine");
     }
     //Preload drum chips image assets
+    var drumsChipImageSet_ArrayPromises = [];
     var drumsChipImageSet = {};
-    CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/leftcymbal_chip.png", "LC");
-    CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/hihat_chip.png", "HH");
-    CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/snare_chip.png", "SD");
-    CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/leftbass_chip.png", "LB");
-    CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/lefthihatpedal_chip.png", "LP");
-    CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/hitom_chip.png", "HT");
-    CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/rightbass_chip.png", "BD");
-    CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/lowtom_chip.png", "LT");
-    CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/floortom_chip.png", "FT");
-    CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/rightcymbal_chip.png", "RC");
-    CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/ridecymbal_chip.png", "RD");
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/leftcymbal_chip.png", "LC"));
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/hihat_chip.png", "HH"));
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/hihat_chip.png", "HHO"));
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/snare_chip.png", "SD"));
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/leftbass_chip.png", "LB"));
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/lefthihatpedal_chip.png", "LP"));
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/hitom_chip.png", "HT"));
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/rightbass_chip.png", "BD"));
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/lowtom_chip.png", "LT"));
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/floortom_chip.png", "FT"));
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/rightcymbal_chip.png", "RC"));
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/ridecymbal_chip.png", "RD"));
+
+    //Load Difficulty Word Art
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/DrumBasicBannerSmall.png", "drumBasic"));
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/DrumAdvancedBannerSmall.png", "drumAdvanced"));
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/DrumExtremeBannerSmall.png", "drumExtreme"));
+    drumsChipImageSet_ArrayPromises.push(CanvasEngine.loadChipImageAssets.call(drumsChipImageSet, "assets/images/DrumMasterBannerSmall.png", "drumMaster"));
 
     //Width and Height of chips are standard
     var DEFAULT_CHIP_HEIGHT = 5;
@@ -30,7 +38,8 @@ var DtxChart = (function(mod){
     //Put in a map and reference this map instead in case need to change
     var DtxChipWidthHeight = {
         "LC":{width: DEFAULT_CHIP_WIDTH+6, height: DEFAULT_CHIP_HEIGHT},
-		"HH":{width: DEFAULT_CHIP_WIDTH, height: DEFAULT_CHIP_HEIGHT},
+        "HH":{width: DEFAULT_CHIP_WIDTH, height: DEFAULT_CHIP_HEIGHT},
+        "HHO":{width: DEFAULT_CHIP_WIDTH, height: DEFAULT_CHIP_HEIGHT},
         "LB":{width: DEFAULT_CHIP_WIDTH, height: DEFAULT_CHIP_HEIGHT},
 		"LP":{width: DEFAULT_CHIP_WIDTH, height: DEFAULT_CHIP_HEIGHT},
 		"SD":{width: DEFAULT_CHIP_WIDTH+3, height: DEFAULT_CHIP_HEIGHT},
@@ -43,7 +52,7 @@ var DtxChart = (function(mod){
     };
 
     var DtxChipLaneOrder = {
-        "full": ["LC","HH","LP","SD","HT","BD","LT","FT","RC","RD"],//LP and LB are in the same position
+        "full": ["LC","HH","LP","SD","HT","BD","LT","FT","RC","RD"],//LP and LB are in the same position, HH and HHO too
         "Gitadora": ["LC","HH","LP","SD","HT","BD","LT","FT","RC"],
         "Vmix": ["HH","SD","BD","HT","LT","RC"]
     }; 
@@ -78,6 +87,7 @@ var DtxChart = (function(mod){
             }
         }
         //Image if available
+        drawParameters.imageSet_promises = drumsChipImageSet_ArrayPromises;
         drawParameters.imageSet = drumsChipImageSet;
 
         //
@@ -128,11 +138,13 @@ var DtxChart = (function(mod){
         if(innerChartType === "full")
         {
             ChipHorizontalPositions["LB"] = ChipHorizontalPositions["LP"];
+            ChipHorizontalPositions["HHO"] = ChipHorizontalPositions["HH"];
         }
         else if(innerChartType === "Gitadora")
         {
             ChipHorizontalPositions["RD"] = ChipHorizontalPositions["RC"];//RD notes will appear at RC lane for Gitadora mode
             ChipHorizontalPositions["LB"] = ChipHorizontalPositions["LP"];
+            ChipHorizontalPositions["HHO"] = ChipHorizontalPositions["HH"];
         }
         else if(innerChartType === "Vmix")
         {
@@ -141,6 +153,7 @@ var DtxChart = (function(mod){
             ChipHorizontalPositions["FT"] = ChipHorizontalPositions["LT"];
             ChipHorizontalPositions["RD"] = ChipHorizontalPositions["RC"];
             ChipHorizontalPositions["LB"] = ChipHorizontalPositions["BD"];
+            ChipHorizontalPositions["HHO"] = ChipHorizontalPositions["HH"];
         }
 
         return ChipHorizontalPositions;
@@ -167,11 +180,13 @@ var DtxChart = (function(mod){
         if(innerChartType === "full")
         {
             chipWidthHeight["LB"] = chipWidthHeight["LP"];
+            chipWidthHeight["HHO"] = chipWidthHeight["HH"];
         }
         else if(innerChartType === "Gitadora")
         {
             chipWidthHeight["LB"] = chipWidthHeight["LP"];
             chipWidthHeight["RD"] = chipWidthHeight["RC"];//RD notes will appear at RC lane for Gitadora mode
+            chipWidthHeight["HHO"] = chipWidthHeight["HH"];
         }
         else if(innerChartType === "Vmix")
         {
@@ -180,6 +195,7 @@ var DtxChart = (function(mod){
             chipWidthHeight["FT"] = chipWidthHeight["LT"];
             chipWidthHeight["RD"] = chipWidthHeight["RC"];
             chipWidthHeight["LB"] = chipWidthHeight["BD"];
+            chipWidthHeight["HHO"] = chipWidthHeight["HH"];
         }
 
         return chipWidthHeight;
