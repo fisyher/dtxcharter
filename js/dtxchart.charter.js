@@ -570,8 +570,9 @@ var DtxChart = (function(mod){
         
         var songLength = this._positionMapper.estimateSongDuration();
 
-        var songMinutes = Math.floor(songLength/60) + "";
-        var songSeconds = Math.round(songLength%60).toFixed(0);
+        var songSecondsRounded = Math.round(songLength);
+        var songMinutes = Math.floor(songSecondsRounded/60) + "";
+        var songSeconds = songSecondsRounded%60;
         songSeconds = songSeconds < 10 ? "0" + songSeconds : "" + songSeconds;//Convert to string with fixed 2 characters
 
         var diffLevel = this._chartType === "Vmix" ? Math.floor(chartInfo[this._mode + "level"]*10).toFixed(0) : chartInfo[this._mode + "level"] + "";
